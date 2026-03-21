@@ -8,7 +8,7 @@ This repository implements an NMOS controller that discovers, models, monitors, 
 
 - IS-04 Query API client behavior
 - IS-05 Connection API client behavior
-- Operator-facing topology and routing UI
+- Operator-facing routing matrix, topology, XY, and inspector UI
 - Compatibility validation before route application
 - Presets and salvos
 - Audit trail
@@ -17,12 +17,14 @@ This repository implements an NMOS controller that discovers, models, monitors, 
 
 ## Current Status
 
-Phase 7 baseline is in place:
+Current implementation includes:
 
 - backend API with controller routes
-- React operator UI
+- React operator UI with shared routing state across tabbed workspaces
 - PostgreSQL persistence
-- mock lab mode with fixture-backed NMOS behavior
+- mock lab mode with fixture-backed NMOS behavior and mutable route state
+- logical routing destinations with video, audio, and ancillary breakaway
+- topology graph data and routing matrix APIs
 - Dockerfiles and `docker-compose.yml`
 - deployment and interoperability documentation
 
@@ -39,6 +41,8 @@ Open:
 - Backend API: `http://localhost:8080`
 - Swagger: `http://localhost:8080/swagger`
 - Mock NMOS fixture service: `http://localhost:8081`
+
+The default landing workflow is the `/routing` UI, which is split into `Router`, `Topology`, `XY Panel`, and `Inspector` tabs backed by one synchronized routing state layer.
 
 ## Repository Structure
 
@@ -74,7 +78,7 @@ Open:
   - controller-facing REST API
   - Swagger, health, readiness, metrics, problem+json
 - `NmosController.Application`
-  - topology, routing, presets, audit, registry services
+  - topology, routing matrix, presets, audit, registry services
 - `NmosController.Domain`
   - normalized NMOS controller model and compatibility logic
 - `NmosController.Infrastructure`
@@ -96,6 +100,8 @@ That gives you:
 - seeded registry configuration
 - a demo preset
 - SDP assets served by the `mock-nmos` sidecar
+- logical destinations and grouped sources for matrix and XY workflows
+- 2022-7 A/B path metadata for graph and route inspection views
 
 ## Documentation
 
@@ -106,7 +112,7 @@ That gives you:
 
 ## Testing
 
-Planned test projects:
+Current test projects:
 
 - `tests/NmosController.Domain.Tests`
 - `tests/NmosController.Application.Tests`
@@ -123,6 +129,14 @@ If the local machine has the .NET 8 SDK installed:
 
 ```bash
 dotnet test src/backend/NmosController.sln
+```
+
+If the local machine has Node.js installed:
+
+```bash
+cd src/frontend/nmos-controller-ui
+npm install
+npm run build
 ```
 
 ## Important Note
