@@ -66,8 +66,8 @@ internal sealed class DatabaseInitializationHostedService(
             var demoRoutes = new[]
             {
                 new PresetRoute(
-                    "receiver-audio-b",
-                    "sender-audio-a",
+                    "receiver-dest-audio-room-audio",
+                    "sender-audio-program-b",
                     ActivationRequest.Immediate(DateTimeOffset.UtcNow))
             };
 
@@ -75,7 +75,7 @@ internal sealed class DatabaseInitializationHostedService(
             {
                 Id = Guid.NewGuid(),
                 Name = "Demo Audio Route",
-                Description = "Connect Program Audio Sender to Audio Multiview B in mock lab mode.",
+                Description = "Connect Program Audio to the Audio Room destination in mock lab mode.",
                 RoutesJson = JsonSerializer.Serialize(demoRoutes, NmosJsonSerializer.Default),
                 CreatedAtUtc = DateTimeOffset.UtcNow,
                 UpdatedAtUtc = DateTimeOffset.UtcNow

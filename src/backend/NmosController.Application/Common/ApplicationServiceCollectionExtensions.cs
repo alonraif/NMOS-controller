@@ -11,6 +11,8 @@ public static class ApplicationServiceCollectionExtensions
     {
         services.AddMemoryCache();
         services.AddSingleton<ConnectionCompatibilityEvaluator>();
+        services.AddSingleton<TopologyBuilderService>();
+        services.AddSingleton<RoutingMatrixService>();
         services.AddScoped<ITopologyService, TopologyService>();
         services.AddScoped<IRoutingService, RoutingService>();
         services.AddScoped<IRegistryService, RegistryService>();

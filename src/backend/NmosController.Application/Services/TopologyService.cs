@@ -8,6 +8,7 @@ namespace NmosController.Application.Services;
 
 public sealed class TopologyService(
     INmosQueryClient queryClient,
+    TopologyBuilderService topologyBuilder,
     IMemoryCache memoryCache) : ITopologyService
 {
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(5);
@@ -16,16 +17,7 @@ public sealed class TopologyService(
     public async Task<TopologyGraphDto> GetTopologyAsync(bool forceRefresh, CancellationToken cancellationToken)
     {
         var snapshot = await GetSnapshotAsync(forceRefresh, cancellationToken);
-
-        return new TopologyGraphDto(
-            snapshot.Registry,
-            snapshot.Nodes,
-            snapshot.Devices,
-            snapshot.Sources,
-            snapshot.Flows,
-            snapshot.Senders,
-            snapshot.Receivers,
-            snapshot.RetrievedAtUtc);
+        return topologyBuilder.BuildGraph(snapshot);
     }
 
     public async Task<IReadOnlyCollection<NmosSenderDto>> GetSendersAsync(bool forceRefresh, CancellationToken cancellationToken)

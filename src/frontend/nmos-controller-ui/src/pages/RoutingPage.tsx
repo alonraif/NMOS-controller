@@ -1,91 +1,113 @@
-import { useMemo, useState } from "react";
-import { useReceivers, useSenders } from "../api/hooks";
-import { Card } from "../components/Card";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { LoadingPanel } from "../components/LoadingPanel";
 import { PageHeader } from "../components/PageHeader";
-import { SearchInput } from "../components/SearchInput";
-import { StatusBadge } from "../components/StatusBadge";
-import { ConnectionDrawer } from "../features/routing/ConnectionDrawer";
-import type { NmosReceiver } from "../api/types";
+import { RouteInspectorPanel } from "../components/routing/RouteInspectorPanel";
+import { RouterTab } from "../components/routing/RouterTab";
+import { RoutingTabs, type RoutingTabId } from "../components/routing/RoutingTabs";
+import { TopologyTab } from "../components/routing/TopologyTab";
+import { XYTab } from "../components/routing/XYTab";
+import { useRouteInspectorState } from "../hooks/useRouteInspectorState";
+import { useRoutingState } from "../hooks/useRoutingState";
+import { useState } from "react";
 
 export function RoutingPage() {
-  const [search, setSearch] = useState("");
-  const [selectedReceiver, setSelectedReceiver] = useState<NmosReceiver | null>(null);
-  const sendersQuery = useSenders();
-  const receiversQuery = useReceivers();
+  const routing = useRoutingState();
+  const [activeTab, setActiveTab] = useState<RoutingTabId>("router");
+  const inspector = useRouteInspectorState(routing.selectedDestination);
 
-  const matrixRows = useMemo(() => {
-    const senders = sendersQuery.data ?? [];
-    return (receiversQuery.data ?? [])
-      .filter((receiver) => receiver.label.toLowerCase().includes(search.toLowerCase()) || receiver.id.toLowerCase().includes(search.toLowerCase()))
-      .map((receiver) => ({
-        receiver,
-        currentSender: senders.find((sender) => sender.id === receiver.active.senderId) ?? null,
-      }));
-  }, [receiversQuery.data, search, sendersQuery.data]);
-
-  if (sendersQuery.isLoading || receiversQuery.isLoading) {
+  if (routing.isLoading || !routing.matrix || !routing.topology) {
     return <LoadingPanel />;
   }
 
-  if (sendersQuery.isError) {
-    return <ErrorPanel message={sendersQuery.error.message} />;
-  }
-
-  if (receiversQuery.isError) {
-    return <ErrorPanel message={receiversQuery.error.message} />;
+  if (routing.error) {
+    return <ErrorPanel message={routing.error.message} />;
   }
 
   return (
     <div className="stack-xl">
-      <PageHeader title="Routing Matrix" subtitle="Receiver-oriented routing workflow with validation and connection editor entry points." />
-      <Card
-        title="Receiver Routing"
-        subtitle="The UI exposes immediate activation first, while scheduled activation remains present in the model."
-        actions={<SearchInput value={search} onChange={setSearch} placeholder="Search routing rows" />}
-      >
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Receiver</th>
-              <th>Current Sender</th>
-              <th>Transport</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {matrixRows.map(({ receiver, currentSender }) => (
-              <tr key={receiver.id}>
-                <td>
-                  <strong>{receiver.label}</strong>
-                  <div className="table-subtext mono">{receiver.id}</div>
-                </td>
-                <td>{currentSender?.label ?? "Disconnected"}</td>
-                <td>{receiver.transport}</td>
-                <td>
-                  <StatusBadge tone={receiver.active.senderId ? "success" : "muted"}>
-                    {receiver.active.senderId ? "Connected" : "Disconnected"}
-                  </StatusBadge>
-                </td>
-                <td>
-                  <button className="ghost-button" type="button" onClick={() => setSelectedReceiver(receiver)}>
-                    Route
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
-
-      <ConnectionDrawer
-        open={Boolean(selectedReceiver)}
-        receiver={selectedReceiver}
-        senders={sendersQuery.data ?? []}
-        onClose={() => setSelectedReceiver(null)}
+      <PageHeader
+        title="Broadcast Routing"
+        subtitle="Split operational routing, engineering topology, and XY switching into focused workspaces with shared synchronized state."
+        actions={<RoutingTabs activeTab={activeTab} onChange={setActiveTab} />}
       />
+
+      {activeTab === "router" ? (
+        <RouterTab
+          sources={routing.sources}
+          destinations={routing.destinations}
+          filteredSources={routing.filteredSources}
+          crosspoints={routing.matrix.crosspoints}
+          selectedDestinationId={routing.selectedDestinationId}
+          selectedSourceId={routing.selectedSourceId}
+          previewDestinationId={routing.preview.destinationId}
+          previewLayers={routing.preview.layers}
+          enabledLayers={routing.enabledLayers}
+          autoTake={routing.autoTake}
+          hasPreview={routing.hasPreview}
+          isBusy={routing.isMutating}
+          sourceSearch={routing.sourceSearch}
+          destinationSearch={routing.destinationSearch}
+          onSourceSearchChange={routing.setSourceSearch}
+          onDestinationSearchChange={routing.setDestinationSearch}
+          onToggleLayer={routing.toggleLayer}
+          onSourceSelect={routing.selectSource}
+          onDestinationSelect={routing.selectDestination}
+          onCrosspointSelect={routing.selectMatrixCrosspoint}
+          onToggleAutoTake={routing.setAutoTake}
+          onTake={() => void routing.takePreview()}
+          onClear={routing.clearPreview}
+          onDisconnect={() => void routing.disconnectSelected()}
+        />
+      ) : null}
+
+      {activeTab === "topology" ? (
+        <TopologyTab
+          topology={routing.topology}
+          previewEdges={routing.previewEdges}
+          selectedDestinationId={routing.selectedDestinationId}
+          selectedSourceId={routing.selectedSourceId}
+          selectedDestinationLabel={routing.selectedDestination?.label ?? null}
+          inspectorRoutes={routing.inspectorRoutes}
+          visibleLayers={routing.visibleTopologyLayers}
+          showInfrastructure={routing.showInfrastructure}
+          showOnlySelectedRoute={routing.showOnlySelectedRoute}
+          inspectorExpanded={inspector.isExpanded}
+          onToggleLayer={routing.toggleTopologyLayer}
+          onToggleInfrastructure={routing.setShowInfrastructure}
+          onToggleOnlySelectedRoute={routing.setShowOnlySelectedRoute}
+          onToggleInspector={() => inspector.setIsExpanded(!inspector.isExpanded)}
+          onRouteSelect={routing.syncFromGraphEdge}
+        />
+      ) : null}
+
+      {activeTab === "xy" ? (
+        <XYTab
+          destinations={routing.destinations}
+          sources={routing.filteredSources}
+          selectedDestinationId={routing.selectedDestinationId}
+          selectedSourceId={routing.selectedSourceId}
+          enabledLayers={routing.enabledLayers}
+          autoTake={routing.autoTake}
+          hasPreview={routing.hasPreview}
+          isBusy={routing.isMutating}
+          onDestinationSelect={routing.selectDestination}
+          onSourceSelect={routing.selectSource}
+          onToggleLayer={routing.toggleLayer}
+          onToggleAutoTake={routing.setAutoTake}
+          onTake={() => void routing.takePreview()}
+          onClear={routing.clearPreview}
+          onDisconnect={() => void routing.disconnectSelected()}
+        />
+      ) : null}
+
+      {activeTab === "inspector" ? (
+        <div className="routing-tab-layout is-inspector">
+          <RouteInspectorPanel
+            selectedDestinationLabel={routing.selectedDestination?.label ?? null}
+            inspectorRoutes={routing.inspectorRoutes}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

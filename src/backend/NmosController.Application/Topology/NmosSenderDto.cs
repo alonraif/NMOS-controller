@@ -14,4 +14,10 @@ public sealed record NmosSenderDto(
     string? ManifestHref,
     string? SubscribedReceiverId,
     TransportFileData? TransportFile,
+    string SignalType,
+    string SourceGroupId,
+    string SourceGroupLabel,
+    string? RedundancyGroupId,
+    string PathType,
+    bool IsHealthy,
     DateTimeOffset LastSeenAtUtc);

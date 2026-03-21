@@ -112,6 +112,12 @@ export interface NmosSender {
   manifestHref: string | null;
   subscribedReceiverId: string | null;
   transportFile: TransportFileData | null;
+  signalType: string;
+  sourceGroupId: string;
+  sourceGroupLabel: string;
+  redundancyGroupId: string | null;
+  pathType: string;
+  isHealthy: boolean;
   lastSeenAtUtc: string;
 }
 
@@ -126,7 +132,33 @@ export interface NmosReceiver {
   active: ConnectionState;
   staged: ConnectionState;
   isConnectable: boolean;
+  signalType: string;
+  routingDestinationId: string;
+  routingDestinationLabel: string;
   lastSeenAtUtc: string;
+}
+
+export interface RoutingDestinationSnapshot {
+  id: string;
+  label: string;
+  nodeId: string;
+  deviceId: string;
+  videoReceiverId: string | null;
+  audioReceiverId: string | null;
+  ancillaryReceiverId: string | null;
+  tags: string[];
+}
+
+export interface TopologyRouteEdge {
+  id: string;
+  source: string;
+  target: string;
+  state: string;
+  path: string;
+  layer: string;
+  redundancyGroup: string | null;
+  isHealthy: boolean;
+  metadata: Record<string, string>;
 }
 
 export interface TopologyGraph {
@@ -137,6 +169,61 @@ export interface TopologyGraph {
   flows: NmosFlow[];
   senders: NmosSender[];
   receivers: NmosReceiver[];
+  routingDestinations: RoutingDestinationSnapshot[];
+  routeEdges: TopologyRouteEdge[];
+  refreshedAtUtc: string;
+}
+
+export interface RoutingSource {
+  id: string;
+  label: string;
+  layer: string;
+  primarySenderId: string | null;
+  secondarySenderId: string | null;
+  redundancyStatus: string;
+  isAvailable: boolean;
+  transport: string;
+  format: string;
+  nodeId: string;
+  deviceId: string;
+}
+
+export interface RoutingDestinationRoute {
+  layer: string;
+  isSupported: boolean;
+  receiverId: string | null;
+  activeSourceId: string | null;
+  activeSourceLabel: string | null;
+  activeSenderId: string | null;
+  stagedSourceId: string | null;
+  stagedSourceLabel: string | null;
+  stagedSenderId: string | null;
+  redundancyStatus: string;
+  isBreakaway: boolean;
+}
+
+export interface RoutingDestination {
+  id: string;
+  label: string;
+  nodeId: string;
+  deviceId: string;
+  routes: RoutingDestinationRoute[];
+  tags: string[];
+}
+
+export interface RoutingCrosspoint {
+  destinationId: string;
+  sourceId: string;
+  layer: string;
+  isCompatible: boolean;
+  isActive: boolean;
+  isBreakaway: boolean;
+}
+
+export interface RoutingMatrix {
+  sources: RoutingSource[];
+  destinations: RoutingDestination[];
+  crosspoints: RoutingCrosspoint[];
   refreshedAtUtc: string;
 }
 
@@ -204,6 +291,22 @@ export interface ConnectReceiverPayload extends ActivationPayload {
 
 export interface DisconnectReceiverPayload extends ActivationPayload {
   requestedBy: string;
+}
+
+export interface RoutingConnectPayload extends ActivationPayload {
+  destinationId: string;
+  requestedBy: string;
+  videoSourceId?: string | null;
+  audioSourceId?: string | null;
+  ancillarySourceId?: string | null;
+}
+
+export interface RoutingDisconnectPayload extends ActivationPayload {
+  destinationId: string;
+  requestedBy: string;
+  disconnectVideo: boolean;
+  disconnectAudio: boolean;
+  disconnectAncillary: boolean;
 }
 
 export interface RouteValidationPayload extends ActivationPayload {

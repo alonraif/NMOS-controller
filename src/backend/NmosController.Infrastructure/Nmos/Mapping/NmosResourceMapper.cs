@@ -64,7 +64,13 @@ internal static class NmosResourceMapper
         this NmosSenderResourceDto dto,
         string nodeId,
         MediaFormatSummary format,
-        TransportFileData? transportFile) =>
+        TransportFileData? transportFile,
+        string signalType,
+        string sourceGroupId,
+        string sourceGroupLabel,
+        string? redundancyGroupId,
+        string pathType,
+        bool isHealthy) =>
         new(
             dto.Id,
             nodeId,
@@ -76,6 +82,12 @@ internal static class NmosResourceMapper
             dto.ManifestHref,
             dto.Subscription?.ReceiverId,
             transportFile,
+            signalType,
+            sourceGroupId,
+            sourceGroupLabel,
+            redundancyGroupId,
+            pathType,
+            isHealthy,
             DateTimeOffset.UtcNow);
 
     public static NmosReceiverDto ToDto(
@@ -83,7 +95,10 @@ internal static class NmosResourceMapper
         string nodeId,
         ConstraintSet constraints,
         ConnectionState active,
-        ConnectionState staged) =>
+        ConnectionState staged,
+        string signalType,
+        string routingDestinationId,
+        string routingDestinationLabel) =>
         new(
             dto.Id,
             nodeId,
@@ -101,6 +116,9 @@ internal static class NmosResourceMapper
             active,
             staged,
             true,
+            signalType,
+            routingDestinationId,
+            routingDestinationLabel,
             DateTimeOffset.UtcNow);
 
     public static NmosReceiver ToDomainReceiver(

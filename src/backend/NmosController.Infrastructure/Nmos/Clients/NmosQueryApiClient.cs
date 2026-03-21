@@ -43,7 +43,13 @@ internal sealed class NmosQueryApiClient(
                 sender.ToDto(
                     device?.NodeId ?? string.Empty,
                     flow?.ToDto().Format ?? new MediaFormatSummary(string.Empty, null, null, null, null, null),
-                    transportFile));
+                    transportFile,
+                    InferSignalType(flow?.ToDto().Format.Format),
+                    sender.Id,
+                    sender.Label,
+                    null,
+                    "A",
+                    true));
         }
 
         var receiverDtos = new List<NmosReceiverDto>(receivers.Count);
@@ -56,7 +62,10 @@ internal sealed class NmosQueryApiClient(
                     device?.NodeId ?? string.Empty,
                     receiverState?.Constraints ?? ConstraintSet.Empty,
                     receiverState?.Active ?? new ConnectionState(null, null, new Dictionary<string, string>(), null),
-                    receiverState?.Staged ?? new ConnectionState(null, null, new Dictionary<string, string>(), null)));
+                    receiverState?.Staged ?? new ConnectionState(null, null, new Dictionary<string, string>(), null),
+                    InferSignalType(receiver.Format),
+                    receiver.Id,
+                    receiver.Label));
         }
 
         return new TopologySnapshotDto(
@@ -74,8 +83,18 @@ internal sealed class NmosQueryApiClient(
             flows.Select(x => x.ToDto()).ToArray(),
             senderDtos,
             receiverDtos,
+            receiverDtos.Select(x => new RoutingDestinationSnapshotDto(x.RoutingDestinationId, x.RoutingDestinationLabel, x.NodeId, x.DeviceId, x.SignalType == "Video" ? x.Id : null, x.SignalType == "Audio" ? x.Id : null, x.SignalType == "Ancillary" ? x.Id : null, Array.Empty<string>())).ToArray(),
             DateTimeOffset.UtcNow);
     }
+
+    private static string InferSignalType(string? format) =>
+        format switch
+        {
+            "urn:x-nmos:format:video" => "Video",
+            "urn:x-nmos:format:audio" => "Audio",
+            "urn:x-nmos:format:data" => "Ancillary",
+            _ => "Unknown"
+        };
 
     private async Task<T?> GetAsync<T>(Uri uri, CancellationToken cancellationToken)
     {

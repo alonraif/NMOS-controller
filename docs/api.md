@@ -51,18 +51,63 @@ Request body for `PUT /registry`:
 - `GET /receivers?refresh=false`
 - `GET /resources/{resourceId}`
 
+`GET /topology` now also returns:
+
+- `routingDestinations`: logical broadcast destinations that can fan into separate video, audio, and ancillary NMOS receivers
+- `routeEdges`: active, staged, and preview-capable route edges with `path` `A|B`, `layer`, `redundancyGroup`, and metadata used by the topology graph
+
 ### Routing
 
+- `GET /routing/matrix?refresh=false`
 - `POST /routing/validate`
+- `POST /routing/connect`
+- `POST /routing/disconnect`
 - `POST /routing/receivers/{receiverId}/connect`
 - `POST /routing/receivers/{receiverId}/disconnect`
+
+Matrix response shape:
+
+```json
+{
+  "sources": [],
+  "destinations": [],
+  "crosspoints": [],
+  "refreshedAtUtc": "2026-03-21T12:00:00Z"
+}
+```
 
 Validation request:
 
 ```json
 {
-  "senderId": "sender-audio-a",
-  "receiverId": "receiver-audio-b",
+  "senderId": "sender-audio-program-b",
+  "receiverId": "receiver-dest-audio-room-audio",
+  "activationMode": "Immediate"
+}
+```
+
+Broadcast routing connect request:
+
+```json
+{
+  "destinationId": "dest-studio-a",
+  "requestedBy": "operator",
+  "videoSourceId": "src-video-cam1",
+  "audioSourceId": "src-audio-program",
+  "ancillarySourceId": "src-anc-cam1",
+  "activationMode": "Immediate"
+}
+```
+
+Broadcast routing disconnect request:
+
+```json
+{
+  "destinationId": "dest-studio-a",
+  "requestedBy": "operator",
+  "disconnectVideo": true,
+  "disconnectAudio": false,
+  "disconnectAncillary": false,
   "activationMode": "Immediate"
 }
 ```
@@ -71,7 +116,7 @@ Connect request:
 
 ```json
 {
-  "senderId": "sender-audio-a",
+  "senderId": "sender-audio-program-b",
   "requestedBy": "operator",
   "activationMode": "Immediate"
 }
@@ -102,8 +147,8 @@ Create or update preset:
   "description": "Route audio to multiviewer",
   "routes": [
     {
-      "receiverId": "receiver-audio-b",
-      "senderId": "sender-audio-a",
+      "receiverId": "receiver-dest-audio-room-audio",
+      "senderId": "sender-audio-program-b",
       "activationMode": "Immediate"
     }
   ]
@@ -123,6 +168,10 @@ Create or update preset:
 
 ## Notes
 
-- Scheduled activation is part of the request model, but the UI currently drives immediate activation first.
+- The `/routing` page is now tabbed into focused workspaces: `Router`, `Topology`, `XY Panel`, and `Inspector`.
+- All tabs share one routing state layer, so preview selections, current destination focus, and executed routes remain synchronized while operators switch views.
+- The `/routing` UI uses a preview/take workflow. Preview state is frontend-managed in v1 and `TAKE` submits immediate IS-05 style activation.
+- Breakaway routing is modeled by separate `videoSourceId`, `audioSourceId`, and `ancillarySourceId` fields on `/routing/connect`.
+- 2022-7 awareness is modeled through grouped senders and graph edges that expose `path` `A|B` plus redundancy health badges like `A/B OK`, `A only`, `B only`, and `No signal`.
 - In `Mock` mode, the controller uses its fixture-backed adapters rather than live IS-04 or IS-05 calls.
 - Enum values are serialized as strings so the UI and API remain explicit and stable.

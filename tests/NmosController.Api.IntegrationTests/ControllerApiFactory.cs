@@ -58,6 +58,12 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
                             null,
                             null,
                             new TransportFileData("application/sdp", "v=0"),
+                            "Audio",
+                            "source-a",
+                            "Sender A",
+                            null,
+                            "A",
+                            true,
                             DateTimeOffset.UtcNow)
                     ],
                     [
@@ -72,8 +78,13 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
                             new ConnectionState(null, "false", new Dictionary<string, string>(), null),
                             new ConnectionState(null, "false", new Dictionary<string, string>(), null),
                             true,
+                            "Audio",
+                            "receiver-a",
+                            "Receiver A",
                             DateTimeOffset.UtcNow)
                     ],
+                    [new RoutingDestinationSnapshotDto("receiver-a", "Receiver A", "node-a", "device-a", null, "receiver-a", null, Array.Empty<string>())],
+                    Array.Empty<TopologyRouteEdgeDto>(),
                     DateTimeOffset.UtcNow));
 
         public Task<IReadOnlyCollection<NmosSenderDto>> GetSendersAsync(bool forceRefresh, CancellationToken cancellationToken) =>
@@ -99,6 +110,9 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
 
     private sealed class FakeRoutingService : IRoutingService
     {
+        public Task<RoutingMatrixDto> GetMatrixAsync(bool forceRefresh, CancellationToken cancellationToken) =>
+            Task.FromResult(new RoutingMatrixDto(Array.Empty<RoutingSourceDto>(), Array.Empty<RoutingDestinationDto>(), Array.Empty<RoutingCrosspointDto>(), DateTimeOffset.UtcNow));
+
         public Task<RouteValidationResultDto> ValidateAsync(RouteValidationCommand command, CancellationToken cancellationToken) =>
             Task.FromResult(new RouteValidationResultDto(CompatibilityStatus.Compatible, Array.Empty<RouteValidationIssueDto>()));
 
@@ -106,6 +120,12 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
             Task.FromResult(ServiceResult.Success("connected"));
 
         public Task<ServiceResult> DisconnectAsync(RouteDisconnectCommand command, CancellationToken cancellationToken) =>
+            Task.FromResult(ServiceResult.Success("disconnected"));
+
+        public Task<ServiceResult> ConnectAsync(RoutingConnectCommand command, CancellationToken cancellationToken) =>
+            Task.FromResult(ServiceResult.Success("connected"));
+
+        public Task<ServiceResult> DisconnectAsync(RoutingDisconnectCommand command, CancellationToken cancellationToken) =>
             Task.FromResult(ServiceResult.Success("disconnected"));
     }
 

@@ -81,6 +81,7 @@ public sealed class MockNmosFixtureStore
             }
 
             TransportFileData? transportFile = null;
+            string? activeSourceGroupId = null;
             if (request.Operation == ConnectionOperation.Connect && request.SenderId is not null)
             {
                 if (!senders.TryGetValue(request.SenderId, out var sender))
@@ -89,14 +90,20 @@ public sealed class MockNmosFixtureStore
                 }
 
                 transportFile = sender.TransportFile;
-                senders[request.SenderId] = sender with { SubscribedReceiverId = request.ReceiverId };
+                activeSourceGroupId = sender.SourceGroupId;
+                foreach (var senderInGroup in senders.Values.Where(x => string.Equals(x.SourceGroupId, sender.SourceGroupId, StringComparison.OrdinalIgnoreCase)).ToArray())
+                {
+                    senders[senderInGroup.Id] = senderInGroup with { SubscribedReceiverId = request.ReceiverId };
+                }
             }
 
             foreach (var sender in senders.Values.Where(x => x.SubscribedReceiverId == request.ReceiverId))
             {
                 senders[sender.Id] = sender with
                 {
-                    SubscribedReceiverId = request.Operation == ConnectionOperation.Connect && sender.Id == request.SenderId
+                    SubscribedReceiverId = request.Operation == ConnectionOperation.Connect
+                        && activeSourceGroupId is not null
+                        && string.Equals(sender.SourceGroupId, activeSourceGroupId, StringComparison.OrdinalIgnoreCase)
                         ? request.ReceiverId
                         : null
                 };

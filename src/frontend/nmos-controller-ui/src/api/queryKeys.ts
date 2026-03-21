@@ -1,5 +1,6 @@
 export const queryKeys = {
   topology: (refresh = false) => ["topology", refresh] as const,
+  routingMatrix: (refresh = false) => ["routing-matrix", refresh] as const,
   senders: (refresh = false) => ["senders", refresh] as const,
   receivers: (refresh = false) => ["receivers", refresh] as const,
   resource: (resourceId: string) => ["resource", resourceId] as const,

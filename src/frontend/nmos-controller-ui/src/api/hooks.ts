@@ -5,6 +5,8 @@ import type {
   ConnectReceiverPayload,
   DisconnectReceiverPayload,
   ExecutePresetPayload,
+  RoutingConnectPayload,
+  RoutingDisconnectPayload,
   RouteValidationPayload,
   UpdateRegistryPayload,
   UpsertPresetPayload,
@@ -14,6 +16,13 @@ export function useTopology(refresh = false) {
   return useQuery({
     queryKey: queryKeys.topology(refresh),
     queryFn: () => api.getTopology(refresh),
+  });
+}
+
+export function useRoutingMatrix(refresh = false) {
+  return useQuery({
+    queryKey: queryKeys.routingMatrix(refresh),
+    queryFn: () => api.getRoutingMatrix(refresh),
   });
 }
 
@@ -97,6 +106,34 @@ export function useDisconnectReceiver() {
     mutationFn: ({ receiverId, payload }: { receiverId: string; payload: DisconnectReceiverPayload }) =>
       api.disconnectReceiver(receiverId, payload),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.topology() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.senders() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.receivers() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.audit(100) });
+    },
+  });
+}
+
+export function useConnectRouting() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RoutingConnectPayload) => api.connectRouting(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.routingMatrix() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.topology() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.senders() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.receivers() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.audit(100) });
+    },
+  });
+}
+
+export function useDisconnectRouting() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RoutingDisconnectPayload) => api.disconnectRouting(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.routingMatrix() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.topology() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.senders() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.receivers() });

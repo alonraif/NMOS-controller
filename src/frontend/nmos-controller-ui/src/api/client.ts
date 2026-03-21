@@ -9,6 +9,9 @@ import type {
   PresetSalvo,
   RegistrySettings,
   ResourceDetail,
+  RoutingConnectPayload,
+  RoutingDisconnectPayload,
+  RoutingMatrix,
   RouteOperationResponse,
   RouteValidationPayload,
   RouteValidationResult,
@@ -55,6 +58,9 @@ export const api = {
   async getTopology(refresh = false) {
     return unwrap(await request<ApiEnvelope<TopologyGraph>>(`/topology?refresh=${refresh}`));
   },
+  async getRoutingMatrix(refresh = false) {
+    return unwrap(await request<ApiEnvelope<RoutingMatrix>>(`/routing/matrix?refresh=${refresh}`));
+  },
   async getSenders(refresh = false) {
     return unwrap(await request<ApiEnvelope<NmosSender[]>>(`/senders?refresh=${refresh}`));
   },
@@ -94,6 +100,22 @@ export const api = {
   async disconnectReceiver(receiverId: string, payload: DisconnectReceiverPayload) {
     return unwrap(
       await request<ApiEnvelope<RouteOperationResponse>>(`/routing/receivers/${receiverId}/disconnect`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    );
+  },
+  async connectRouting(payload: RoutingConnectPayload) {
+    return unwrap(
+      await request<ApiEnvelope<RouteOperationResponse>>(`/routing/connect`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    );
+  },
+  async disconnectRouting(payload: RoutingDisconnectPayload) {
+    return unwrap(
+      await request<ApiEnvelope<RouteOperationResponse>>(`/routing/disconnect`, {
         method: "POST",
         body: JSON.stringify(payload),
       }),

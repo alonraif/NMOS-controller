@@ -14,4 +14,7 @@ public sealed record NmosReceiverDto(
     ConnectionState Active,
     ConnectionState Staged,
     bool IsConnectable,
+    string SignalType,
+    string RoutingDestinationId,
+    string RoutingDestinationLabel,
     DateTimeOffset LastSeenAtUtc);

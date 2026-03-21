@@ -8,4 +8,5 @@ public sealed record TopologySnapshotDto(
     IReadOnlyCollection<NmosFlowDto> Flows,
     IReadOnlyCollection<NmosSenderDto> Senders,
     IReadOnlyCollection<NmosReceiverDto> Receivers,
+    IReadOnlyCollection<RoutingDestinationSnapshotDto> RoutingDestinations,
     DateTimeOffset RetrievedAtUtc);

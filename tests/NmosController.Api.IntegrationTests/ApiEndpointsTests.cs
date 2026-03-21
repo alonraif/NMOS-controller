@@ -30,6 +30,14 @@ public sealed class ApiEndpointsTests : IClassFixture<ControllerApiFactory>
     }
 
     [Fact]
+    public async Task GetRoutingMatrix_ReturnsOk()
+    {
+        var response = await _client.GetAsync("/api/v1/routing/matrix");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task ValidateRoute_ReturnsOk()
     {
         var response = await _client.PostAsJsonAsync(
@@ -38,6 +46,36 @@ public sealed class ApiEndpointsTests : IClassFixture<ControllerApiFactory>
             {
                 SenderId = "sender-a",
                 ReceiverId = "receiver-a"
+            });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ConnectRouting_ReturnsOk()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/v1/routing/connect",
+            new RoutingConnectRequest
+            {
+                DestinationId = "receiver-a",
+                RequestedBy = "tester",
+                AudioSourceId = "source-a"
+            });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DisconnectRouting_ReturnsOk()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/v1/routing/disconnect",
+            new RoutingDisconnectRequest
+            {
+                DestinationId = "receiver-a",
+                RequestedBy = "tester",
+                DisconnectAudio = true
             });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

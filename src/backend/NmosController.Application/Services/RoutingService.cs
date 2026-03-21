@@ -15,8 +15,26 @@ public sealed class RoutingService(
     ITopologyService topologyService,
     INmosConnectionClient connectionClient,
     IAuditService auditService,
-    ConnectionCompatibilityEvaluator compatibilityEvaluator) : IRoutingService
+    ConnectionCompatibilityEvaluator compatibilityEvaluator,
+    RoutingMatrixService routingMatrixService) : IRoutingService
 {
+    public async Task<RoutingMatrixDto> GetMatrixAsync(bool forceRefresh, CancellationToken cancellationToken)
+    {
+        var topology = await topologyService.GetTopologyAsync(forceRefresh, cancellationToken);
+        var snapshot = new TopologySnapshotDto(
+            topology.Registry,
+            topology.Nodes,
+            topology.Devices,
+            topology.Sources,
+            topology.Flows,
+            topology.Senders,
+            topology.Receivers,
+            topology.RoutingDestinations,
+            topology.RefreshedAtUtc);
+
+        return routingMatrixService.BuildMatrix(snapshot);
+    }
+
     public async Task<RouteValidationResultDto> ValidateAsync(RouteValidationCommand command, CancellationToken cancellationToken)
     {
         var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
@@ -106,5 +124,113 @@ public sealed class RoutingService(
             cancellationToken);
 
         return ServiceResult.Success("Disconnect request submitted.");
+    }
+
+    public async Task<ServiceResult> ConnectAsync(RoutingConnectCommand command, CancellationToken cancellationToken)
+    {
+        var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
+        var snapshot = new TopologySnapshotDto(
+            topology.Registry,
+            topology.Nodes,
+            topology.Devices,
+            topology.Sources,
+            topology.Flows,
+            topology.Senders,
+            topology.Receivers,
+            topology.RoutingDestinations,
+            topology.RefreshedAtUtc);
+
+        var destination = routingMatrixService.ResolveDestination(snapshot, command.DestinationId);
+        var operations = new (string? ReceiverId, string? SourceId, string Layer)[]
+        {
+            (destination.VideoReceiverId, command.VideoSourceId, "Video"),
+            (destination.AudioReceiverId, command.AudioSourceId, "Audio"),
+            (destination.AncillaryReceiverId, command.AncillarySourceId, "Ancillary")
+        };
+
+        foreach (var operation in operations.Where(x => x.ReceiverId is not null && x.SourceId is not null))
+        {
+            var senderId = routingMatrixService.ResolveSenderId(snapshot, operation.SourceId!);
+            var validation = await ValidateAsync(new RouteValidationCommand(operation.ReceiverId!, senderId, command.Activation), cancellationToken);
+            if (validation.Status == CompatibilityStatus.Incompatible)
+            {
+                return ServiceResult.Failure($"Routing request for {operation.Layer} failed validation.");
+            }
+
+            await connectionClient.ApplyConnectionAsync(
+                new ConnectionRequest
+                {
+                    Operation = ConnectionOperation.Connect,
+                    ReceiverId = operation.ReceiverId!,
+                    SenderId = senderId,
+                    Activation = command.Activation,
+                    RequestedBy = command.RequestedBy,
+                    RequestedAtUtc = DateTimeOffset.UtcNow
+                },
+                cancellationToken);
+        }
+
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.ReceiverConnected,
+                command.RequestedBy,
+                $"Connected routing destination '{command.DestinationId}'.",
+                command.DestinationId,
+                "RoutingDestination",
+                null,
+                JsonSerializer.Serialize(new { command.DestinationId, command.VideoSourceId, command.AudioSourceId, command.AncillarySourceId })),
+            cancellationToken);
+
+        return ServiceResult.Success("Routing change submitted.");
+    }
+
+    public async Task<ServiceResult> DisconnectAsync(RoutingDisconnectCommand command, CancellationToken cancellationToken)
+    {
+        var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
+        var snapshot = new TopologySnapshotDto(
+            topology.Registry,
+            topology.Nodes,
+            topology.Devices,
+            topology.Sources,
+            topology.Flows,
+            topology.Senders,
+            topology.Receivers,
+            topology.RoutingDestinations,
+            topology.RefreshedAtUtc);
+
+        var destination = routingMatrixService.ResolveDestination(snapshot, command.DestinationId);
+        var operations = new (bool Enabled, string? ReceiverId)[]
+        {
+            (command.DisconnectVideo, destination.VideoReceiverId),
+            (command.DisconnectAudio, destination.AudioReceiverId),
+            (command.DisconnectAncillary, destination.AncillaryReceiverId)
+        };
+
+        foreach (var operation in operations.Where(x => x.Enabled && x.ReceiverId is not null))
+        {
+            await connectionClient.ApplyConnectionAsync(
+                new ConnectionRequest
+                {
+                    Operation = ConnectionOperation.Disconnect,
+                    ReceiverId = operation.ReceiverId!,
+                    Activation = command.Activation,
+                    RequestedBy = command.RequestedBy,
+                    RequestedAtUtc = DateTimeOffset.UtcNow
+                },
+                cancellationToken);
+        }
+
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.ReceiverDisconnected,
+                command.RequestedBy,
+                $"Disconnected routing destination '{command.DestinationId}'.",
+                command.DestinationId,
+                "RoutingDestination",
+                null,
+                JsonSerializer.Serialize(new { command.DestinationId, command.DisconnectVideo, command.DisconnectAudio, command.DisconnectAncillary })),
+            cancellationToken);
+
+        return ServiceResult.Success("Routing disconnect submitted.");
     }
 }

@@ -20,7 +20,7 @@ public sealed class RoutingServiceTests
         var connectionClient = new RecordingConnectionClient();
         var auditService = new RecordingAuditService();
         var topologyService = new FakeTopologyService();
-        var service = new RoutingService(topologyService, connectionClient, auditService, new ConnectionCompatibilityEvaluator());
+        var service = new RoutingService(topologyService, connectionClient, auditService, new ConnectionCompatibilityEvaluator(), new RoutingMatrixService());
 
         var result = await service.ConnectAsync(
             new RouteConnectCommand(
@@ -53,9 +53,15 @@ public sealed class RoutingServiceTests
                 null,
                 null,
                 new TransportFileData("application/sdp", "v=0"),
+                "Video",
+                "source-a",
+                "Sender A",
+                null,
+                "A",
+                true,
                 DateTimeOffset.UtcNow));
 
-        var service = new RoutingService(topologyService, connectionClient, auditService, new ConnectionCompatibilityEvaluator());
+        var service = new RoutingService(topologyService, connectionClient, auditService, new ConnectionCompatibilityEvaluator(), new RoutingMatrixService());
 
         var result = await service.ValidateAsync(
             new RouteValidationCommand(
@@ -83,6 +89,12 @@ public sealed class RoutingServiceTests
                 null,
                 null,
                 new TransportFileData("application/sdp", "v=0"),
+                "Audio",
+                "source-a",
+                "Sender A",
+                null,
+                "A",
+                true,
                 DateTimeOffset.UtcNow);
 
             var receiver = new NmosReceiverDto(
@@ -96,6 +108,9 @@ public sealed class RoutingServiceTests
                 new ConnectionState(null, "false", new Dictionary<string, string>(), null),
                 new ConnectionState(null, "false", new Dictionary<string, string>(), null),
                 true,
+                "Audio",
+                "receiver-a",
+                "Receiver A",
                 DateTimeOffset.UtcNow);
 
             return Task.FromResult(
@@ -107,6 +122,8 @@ public sealed class RoutingServiceTests
                     Array.Empty<NmosFlowDto>(),
                     [sender],
                     [receiver],
+                    [new RoutingDestinationSnapshotDto("receiver-a", "Receiver A", "node-a", "device-a", null, "receiver-a", null, Array.Empty<string>())],
+                    Array.Empty<TopologyRouteEdgeDto>(),
                     DateTimeOffset.UtcNow));
         }
 

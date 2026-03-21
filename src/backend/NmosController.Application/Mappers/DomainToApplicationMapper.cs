@@ -120,6 +120,12 @@ public static class DomainToApplicationMapper
             sender.ManifestHref,
             sender.SubscribedReceiverId,
             sender.TransportFile,
+            GetSignalType(sender.Format),
+            sender.Id,
+            sender.Label,
+            null,
+            "A",
+            true,
             sender.LastSeenAtUtc);
 
     public static NmosReceiverDto ToDto(this NmosReceiver receiver) =>
@@ -134,5 +140,17 @@ public static class DomainToApplicationMapper
             receiver.Active,
             receiver.Staged,
             receiver.IsConnectable,
+            GetSignalType(receiver.Format),
+            receiver.Id,
+            receiver.Label,
             receiver.LastSeenAtUtc);
+
+    private static string GetSignalType(MediaFormatSummary format) =>
+        format.Format switch
+        {
+            "urn:x-nmos:format:video" => "Video",
+            "urn:x-nmos:format:audio" => "Audio",
+            "urn:x-nmos:format:data" => "Ancillary",
+            _ => "Unknown"
+        };
 }

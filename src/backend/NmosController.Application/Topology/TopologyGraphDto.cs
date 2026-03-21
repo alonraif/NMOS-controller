@@ -8,4 +8,6 @@ public sealed record TopologyGraphDto(
     IReadOnlyCollection<NmosFlowDto> Flows,
     IReadOnlyCollection<NmosSenderDto> Senders,
     IReadOnlyCollection<NmosReceiverDto> Receivers,
+    IReadOnlyCollection<RoutingDestinationSnapshotDto> RoutingDestinations,
+    IReadOnlyCollection<TopologyRouteEdgeDto> RouteEdges,
     DateTimeOffset RefreshedAtUtc);

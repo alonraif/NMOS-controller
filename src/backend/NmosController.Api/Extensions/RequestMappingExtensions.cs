@@ -15,6 +15,12 @@ internal static class RequestMappingExtensions
     public static ActivationRequest ToActivationRequest(this DisconnectReceiverRequest request) =>
         CreateActivation(request.ActivationMode, request.ActivationTimeUtc, request.RequestedOffsetSeconds);
 
+    public static ActivationRequest ToActivationRequest(this RoutingConnectRequest request) =>
+        CreateActivation(request.ActivationMode, request.ActivationTimeUtc, request.RequestedOffsetSeconds);
+
+    public static ActivationRequest ToActivationRequest(this RoutingDisconnectRequest request) =>
+        CreateActivation(request.ActivationMode, request.ActivationTimeUtc, request.RequestedOffsetSeconds);
+
     public static ActivationRequest ToActivationRequest(this PresetRouteRequest request) =>
         CreateActivation(request.ActivationMode, request.ActivationTimeUtc, request.RequestedOffsetSeconds);
 
