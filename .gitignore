@@ -1,0 +1,32 @@
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Env files
+.env
+
+# Logs
+*.log
+logs/
+
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# .NET
+bin/
+obj/
+TestResults/
+.vs/
+
+# Docker
+postgres-data/
+
+# Generated
+*.user
+*.suo

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>NmosController.Contracts</RootNamespace>
+    <AssemblyName>NmosController.Contracts</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NmosController.Domain\NmosController.Domain.csproj" />
+  </ItemGroup>
+</Project>

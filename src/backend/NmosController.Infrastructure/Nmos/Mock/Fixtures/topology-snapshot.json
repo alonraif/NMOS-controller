@@ -1,0 +1,262 @@
+{
+  "registry": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "name": "Mock ST 2110 Lab",
+    "baseUrl": "http://mock-nmos:8081",
+    "queryApiVersion": "v1.3",
+    "connectionApiVersion": "v1.1",
+    "mode": "Mock",
+    "isEnabled": true
+  },
+  "nodes": [
+    {
+      "id": "node-a",
+      "label": "Vision Core A",
+      "hostname": "vision-core-a",
+      "description": "Primary video processing node",
+      "apiVersions": [ "v1.1", "v1.2", "v1.3" ],
+      "interfaces": [ "eno1", "eno2" ],
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    },
+    {
+      "id": "node-b",
+      "label": "Audio Core B",
+      "hostname": "audio-core-b",
+      "description": "Primary audio processing node",
+      "apiVersions": [ "v1.1", "v1.2", "v1.3" ],
+      "interfaces": [ "eno1", "eno2" ],
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    }
+  ],
+  "devices": [
+    {
+      "id": "device-a",
+      "nodeId": "node-a",
+      "label": "Camera Gateway A",
+      "deviceType": "urn:x-nmos:device:generic",
+      "senderIds": [ "sender-video-a", "sender-audio-a" ],
+      "receiverIds": [ "receiver-monitor-a" ],
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    },
+    {
+      "id": "device-b",
+      "nodeId": "node-b",
+      "label": "Multiviewer B",
+      "deviceType": "urn:x-nmos:device:generic",
+      "senderIds": [],
+      "receiverIds": [ "receiver-audio-b" ],
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source-video-a",
+      "deviceId": "device-a",
+      "label": "Program Video A",
+      "format": {
+        "format": "urn:x-nmos:format:video",
+        "mediaType": "video/raw",
+        "grainRate": "50/1",
+        "frameWidth": "1920",
+        "frameHeight": "1080",
+        "sampleRate": null
+      },
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    },
+    {
+      "id": "source-audio-a",
+      "deviceId": "device-a",
+      "label": "Program Audio A",
+      "format": {
+        "format": "urn:x-nmos:format:audio",
+        "mediaType": "audio/L24",
+        "grainRate": null,
+        "frameWidth": null,
+        "frameHeight": null,
+        "sampleRate": "48000/1"
+      },
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    }
+  ],
+  "flows": [
+    {
+      "id": "flow-video-a",
+      "sourceId": "source-video-a",
+      "deviceId": "device-a",
+      "label": "Program Video Flow",
+      "format": {
+        "format": "urn:x-nmos:format:video",
+        "mediaType": "video/raw",
+        "grainRate": "50/1",
+        "frameWidth": "1920",
+        "frameHeight": "1080",
+        "sampleRate": null
+      },
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    },
+    {
+      "id": "flow-audio-a",
+      "sourceId": "source-audio-a",
+      "deviceId": "device-a",
+      "label": "Program Audio Flow",
+      "format": {
+        "format": "urn:x-nmos:format:audio",
+        "mediaType": "audio/L24",
+        "grainRate": null,
+        "frameWidth": null,
+        "frameHeight": null,
+        "sampleRate": "48000/1"
+      },
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    }
+  ],
+  "senders": [
+    {
+      "id": "sender-video-a",
+      "nodeId": "node-a",
+      "deviceId": "device-a",
+      "flowId": "flow-video-a",
+      "label": "Program Video Sender",
+      "transport": "Rtp",
+      "format": {
+        "format": "urn:x-nmos:format:video",
+        "mediaType": "video/raw",
+        "grainRate": "50/1",
+        "frameWidth": "1920",
+        "frameHeight": "1080",
+        "sampleRate": null
+      },
+      "manifestHref": "http://mock-nmos:8081/manifests/sender-video-a.sdp",
+      "subscribedReceiverId": "receiver-monitor-a",
+      "transportFile": {
+        "contentType": "application/sdp",
+        "content": "v=0\r\no=- 0 0 IN IP4 239.10.10.10\r\ns=Program Video Sender\r\nc=IN IP4 239.10.10.10/32\r\nt=0 0\r\nm=video 5004 RTP/AVP 96\r\na=rtpmap:96 raw/90000\r\n"
+      },
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    },
+    {
+      "id": "sender-audio-a",
+      "nodeId": "node-a",
+      "deviceId": "device-a",
+      "flowId": "flow-audio-a",
+      "label": "Program Audio Sender",
+      "transport": "Rtp",
+      "format": {
+        "format": "urn:x-nmos:format:audio",
+        "mediaType": "audio/L24",
+        "grainRate": null,
+        "frameWidth": null,
+        "frameHeight": null,
+        "sampleRate": "48000/1"
+      },
+      "manifestHref": "http://mock-nmos:8081/manifests/sender-audio-a.sdp",
+      "subscribedReceiverId": null,
+      "transportFile": {
+        "contentType": "application/sdp",
+        "content": "v=0\r\no=- 0 0 IN IP4 239.10.10.20\r\ns=Program Audio Sender\r\nc=IN IP4 239.10.10.20/32\r\nt=0 0\r\nm=audio 5006 RTP/AVP 97\r\na=rtpmap:97 L24/48000/2\r\n"
+      },
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    }
+  ],
+  "receivers": [
+    {
+      "id": "receiver-monitor-a",
+      "nodeId": "node-a",
+      "deviceId": "device-a",
+      "label": "Studio Monitor A",
+      "transport": "Rtp",
+      "format": {
+        "format": "urn:x-nmos:format:video",
+        "mediaType": "video/raw",
+        "grainRate": null,
+        "frameWidth": null,
+        "frameHeight": null,
+        "sampleRate": null
+      },
+      "constraints": {
+        "parameters": [
+          {
+            "name": "destination_port",
+            "minimum": "5000",
+            "maximum": "6000",
+            "allowedValues": []
+          }
+        ],
+        "mediaTypes": [ "video/raw" ],
+        "transportTypes": [ "Rtp" ],
+        "requiresTransportFile": true
+      },
+      "active": {
+        "senderId": "sender-video-a",
+        "masterEnable": "true",
+        "transportParameters": {
+          "destination_port": "5004"
+        },
+        "transportFile": {
+          "contentType": "application/sdp",
+          "content": "v=0\r\no=- 0 0 IN IP4 239.10.10.10\r\ns=Program Video Sender\r\nc=IN IP4 239.10.10.10/32\r\nt=0 0\r\nm=video 5004 RTP/AVP 96\r\na=rtpmap:96 raw/90000\r\n"
+        }
+      },
+      "staged": {
+        "senderId": "sender-video-a",
+        "masterEnable": "true",
+        "transportParameters": {
+          "destination_port": "5004"
+        },
+        "transportFile": {
+          "contentType": "application/sdp",
+          "content": "v=0\r\no=- 0 0 IN IP4 239.10.10.10\r\ns=Program Video Sender\r\nc=IN IP4 239.10.10.10/32\r\nt=0 0\r\nm=video 5004 RTP/AVP 96\r\na=rtpmap:96 raw/90000\r\n"
+        }
+      },
+      "isConnectable": true,
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    },
+    {
+      "id": "receiver-audio-b",
+      "nodeId": "node-b",
+      "deviceId": "device-b",
+      "label": "Audio Multiview B",
+      "transport": "Rtp",
+      "format": {
+        "format": "urn:x-nmos:format:audio",
+        "mediaType": "audio/L24",
+        "grainRate": null,
+        "frameWidth": null,
+        "frameHeight": null,
+        "sampleRate": "48000/1"
+      },
+      "constraints": {
+        "parameters": [
+          {
+            "name": "destination_port",
+            "minimum": "5000",
+            "maximum": "6000",
+            "allowedValues": []
+          }
+        ],
+        "mediaTypes": [ "audio/L24" ],
+        "transportTypes": [ "Rtp" ],
+        "requiresTransportFile": true
+      },
+      "active": {
+        "senderId": null,
+        "masterEnable": "false",
+        "transportParameters": {
+          "destination_port": "5006"
+        },
+        "transportFile": null
+      },
+      "staged": {
+        "senderId": null,
+        "masterEnable": "false",
+        "transportParameters": {
+          "destination_port": "5006"
+        },
+        "transportFile": null
+      },
+      "isConnectable": true,
+      "lastSeenAtUtc": "2026-03-21T12:00:00Z"
+    }
+  ],
+  "retrievedAtUtc": "2026-03-21T12:00:00Z"
+}

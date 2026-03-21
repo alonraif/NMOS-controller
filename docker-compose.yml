@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nmos-controller-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nmos_controller
+      POSTGRES_USER: nmos
+      POSTGRES_PASSWORD: nmos
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nmos -d nmos_controller"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mock-nmos:
+    build:
+      context: .
+      dockerfile: docker/mock-nmos/Dockerfile
+    container_name: nmos-controller-mock-nmos
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: nmos-controller-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      NMOS_CONTROLLER__MODE: ${NMOS_CONTROLLER__MODE:-Mock}
+      NMOS_CONTROLLER__REGISTRY__NAME: ${NMOS_CONTROLLER__REGISTRY__NAME:-Local Mock Registry}
+      NMOS_CONTROLLER__REGISTRY__BASEURL: ${NMOS_CONTROLLER__REGISTRY__BASEURL:-http://mock-nmos:8081}
+      NMOS_CONTROLLER__REGISTRY__QUERYAPIVERSION: ${NMOS_CONTROLLER__REGISTRY__QUERYAPIVERSION:-v1.3}
+      NMOS_CONTROLLER__REGISTRY__CONNECTIONAPIVERSION: ${NMOS_CONTROLLER__REGISTRY__CONNECTIONAPIVERSION:-v1.1}
+      NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING: ${NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING:-Host=postgres;Port=5432;Database=nmos_controller;Username=nmos;Password=nmos}
+      NMOS_CONTROLLER__HTTP__TIMEOUTSECONDS: ${NMOS_CONTROLLER__HTTP__TIMEOUTSECONDS:-10}
+      NMOS_CONTROLLER__HTTP__RETRYATTEMPTS: ${NMOS_CONTROLLER__HTTP__RETRYATTEMPTS:-3}
+      NMOS_CONTROLLER__MOCKLAB__FIXTUREPATH: ${NMOS_CONTROLLER__MOCKLAB__FIXTUREPATH:-Nmos/Mock/Fixtures/topology-snapshot.json}
+      NMOS_CONTROLLER__CORS__ALLOWEDORIGINS: ${NMOS_CONTROLLER__CORS__ALLOWEDORIGINS:-http://localhost:5173,http://localhost:8088,http://localhost:8080}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mock-nmos:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: nmos-controller-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "8088:80"
+
+volumes:
+  postgres-data:
