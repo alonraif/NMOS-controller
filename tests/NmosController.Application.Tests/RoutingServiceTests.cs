@@ -34,6 +34,9 @@ public sealed class RoutingServiceTests
         Assert.NotNull(connectionClient.LastRequest);
         Assert.Equal(ConnectionOperation.Connect, connectionClient.LastRequest!.Operation);
         Assert.Equal("sender-a", connectionClient.LastRequest.SenderId);
+        Assert.NotNull(connectionClient.LastRequest.TransportFile);
+        Assert.Single(connectionClient.LastRequest.TransportParameters);
+        Assert.Equal("239.0.0.1", connectionClient.LastRequest.TransportParameters.Single()["multicast_ip"]);
     }
 
     [Fact]
@@ -106,7 +109,18 @@ public sealed class RoutingServiceTests
                 new MediaFormatSummary("urn:x-nmos:format:audio", "audio/L24", null, null, null, "48000/1"),
                 new ConstraintSet(Array.Empty<ConstraintParameter>(), ["audio/L24"], [NmosTransportType.Rtp], true),
                 new ConnectionState(null, "false", new Dictionary<string, string>(), null),
-                new ConnectionState(null, "false", new Dictionary<string, string>(), null),
+                new ConnectionState(
+                    null,
+                    "false",
+                    new Dictionary<string, string>
+                    {
+                        ["destination_port"] = "5004",
+                        ["multicast_ip"] = "239.0.0.1",
+                        ["interface_ip"] = "192.168.1.10",
+                        ["source_ip"] = "0.0.0.0",
+                        ["rtp_enabled"] = "true"
+                    },
+                    null),
                 true,
                 "Audio",
                 "receiver-a",

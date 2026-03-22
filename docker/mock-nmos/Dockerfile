@@ -1,6 +1,11 @@
-FROM nginx:1.27-alpine
+FROM python:3.12-alpine
 
-COPY docker/mock-nmos/nginx.conf /etc/nginx/conf.d/default.conf
-COPY docker/mock-nmos/public /usr/share/nginx/html
+WORKDIR /app
+
+COPY docker/mock-nmos/server.py /app/server.py
+COPY docker/mock-nmos/public /app/public
+COPY src/backend/NmosController.Infrastructure/Nmos/Mock/Fixtures/topology-snapshot.json /app/topology-snapshot.json
 
 EXPOSE 80
+
+CMD ["python", "/app/server.py"]

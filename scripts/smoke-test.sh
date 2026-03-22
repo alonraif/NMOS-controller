@@ -37,7 +37,7 @@ wait_for_url() {
 
 wait_for_url "backend health" "http://localhost:8080/health"
 wait_for_url "backend readiness" "http://localhost:8080/ready"
-wait_for_url "frontend" "http://localhost:8088"
+wait_for_url "frontend" "http://localhost"
 wait_for_url "mock-nmos" "http://localhost:8081/health.json"
 
 echo "Checking controller API endpoints..."

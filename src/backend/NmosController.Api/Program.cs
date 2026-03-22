@@ -54,7 +54,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 var corsOrigins = builder.Configuration.GetSection($"{NmosControllerOptions.SectionName}:Cors")
     .Get<CorsOptions>()?.AllowedOrigins
     ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-    ?? ["http://localhost:5173", "http://localhost:8088", "http://localhost:8080"];
+    ?? ["http://localhost:5173", "http://localhost", "http://localhost:8080", "http://172.16.32.58"];
 
 builder.Services.AddCors(options =>
 {

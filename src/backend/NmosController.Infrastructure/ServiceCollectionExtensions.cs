@@ -48,16 +48,14 @@ public static class ServiceCollectionExtensions
                 var options = serviceProvider.GetRequiredService<IOptions<NmosControllerOptions>>().Value;
                 client.Timeout = TimeSpan.FromSeconds(options.Http.TimeoutSeconds);
             })
-            .AddHttpMessageHandler<CorrelationIdDelegatingHandler>()
-            .AddStandardResilienceHandler();
+            .AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
 
         services.AddHttpClient<NmosConnectionApiClient>((serviceProvider, client) =>
             {
                 var options = serviceProvider.GetRequiredService<IOptions<NmosControllerOptions>>().Value;
                 client.Timeout = TimeSpan.FromSeconds(options.Http.TimeoutSeconds);
             })
-            .AddHttpMessageHandler<CorrelationIdDelegatingHandler>()
-            .AddStandardResilienceHandler();
+            .AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
 
         services.AddScoped<SwitchingNmosQueryClient>();
         services.AddScoped<SwitchingNmosConnectionClient>();

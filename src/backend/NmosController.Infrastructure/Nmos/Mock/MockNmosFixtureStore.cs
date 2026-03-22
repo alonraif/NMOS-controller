@@ -80,7 +80,7 @@ public sealed class MockNmosFixtureStore
                 throw new InvalidOperationException($"Mock receiver '{request.ReceiverId}' was not found.");
             }
 
-            TransportFileData? transportFile = null;
+            TransportFileData? transportFile = request.TransportFile;
             string? activeSourceGroupId = null;
             if (request.Operation == ConnectionOperation.Connect && request.SenderId is not null)
             {
@@ -112,7 +112,9 @@ public sealed class MockNmosFixtureStore
             var newState = new ConnectionState(
                 request.Operation == ConnectionOperation.Connect ? request.SenderId : null,
                 request.Operation == ConnectionOperation.Connect ? "true" : "false",
-                receiver.Active.TransportParameters,
+                request.Operation == ConnectionOperation.Connect && request.TransportParameters.Count > 0
+                    ? new Dictionary<string, string>(request.TransportParameters.First(), StringComparer.OrdinalIgnoreCase)
+                    : receiver.Active.TransportParameters,
                 transportFile);
 
             var updatedReceiver = request.Activation.Mode == ActivationModeType.Immediate

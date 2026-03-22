@@ -18,6 +18,7 @@ public sealed class RegistryOptions
 {
     public string Name { get; set; } = "Local Mock Registry";
     public string BaseUrl { get; set; } = "http://localhost:8081";
+    public string? ConnectionBaseUrl { get; set; }
     public string QueryApiVersion { get; set; } = "v1.3";
     public string ConnectionApiVersion { get; set; } = "v1.1";
     public bool IsEnabled { get; set; } = true;
@@ -42,5 +43,5 @@ public sealed class MockLabOptions
 
 public sealed class CorsOptions
 {
-    public string AllowedOrigins { get; set; } = "http://localhost:5173,http://localhost:8088,http://localhost:8080";
+    public string AllowedOrigins { get; set; } = "http://localhost:5173,http://localhost,http://localhost:8080,http://172.16.32.58";
 }

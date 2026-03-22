@@ -64,25 +64,33 @@ public sealed class RoutingService(
 
     public async Task<ServiceResult> ConnectAsync(RouteConnectCommand command, CancellationToken cancellationToken)
     {
-        var validation = await ValidateAsync(
-            new RouteValidationCommand(command.ReceiverId, command.SenderId, command.Activation),
+        var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
+        var sender = topology.Senders.FirstOrDefault(x => x.Id == command.SenderId);
+        var receiver = topology.Receivers.FirstOrDefault(x => x.Id == command.ReceiverId);
+
+        var assessment = compatibilityEvaluator.Evaluate(
+            sender?.ToDomain(),
+            receiver?.ToDomain(),
+            command.Activation);
+
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.ConnectionValidated,
+                "system",
+                $"Validated route from sender '{command.SenderId}' to receiver '{command.ReceiverId}'.",
+                command.ReceiverId,
+                nameof(ResourceKind.Receiver),
+                null,
+                JsonSerializer.Serialize(new { command.SenderId, command.ReceiverId, assessment.Status })),
             cancellationToken);
 
-        if (validation.Status == CompatibilityStatus.Incompatible)
+        if (assessment.Status == CompatibilityStatus.Incompatible)
         {
             return ServiceResult.Failure("Connection request failed validation.");
         }
 
         await connectionClient.ApplyConnectionAsync(
-            new ConnectionRequest
-            {
-                Operation = ConnectionOperation.Connect,
-                ReceiverId = command.ReceiverId,
-                SenderId = command.SenderId,
-                Activation = command.Activation,
-                RequestedBy = command.RequestedBy,
-                RequestedAtUtc = DateTimeOffset.UtcNow
-            },
+            CreateConnectRequest(command.ReceiverId, command.SenderId, command.Activation, command.RequestedBy, sender, receiver),
             cancellationToken);
 
         await auditService.RecordAsync(
@@ -151,22 +159,31 @@ public sealed class RoutingService(
         foreach (var operation in operations.Where(x => x.ReceiverId is not null && x.SourceId is not null))
         {
             var senderId = routingMatrixService.ResolveSenderId(snapshot, operation.SourceId!);
-            var validation = await ValidateAsync(new RouteValidationCommand(operation.ReceiverId!, senderId, command.Activation), cancellationToken);
-            if (validation.Status == CompatibilityStatus.Incompatible)
+            var sender = snapshot.Senders.FirstOrDefault(x => x.Id == senderId);
+            var receiver = snapshot.Receivers.FirstOrDefault(x => x.Id == operation.ReceiverId!);
+            var assessment = compatibilityEvaluator.Evaluate(
+                sender?.ToDomain(),
+                receiver?.ToDomain(),
+                command.Activation);
+
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.ConnectionValidated,
+                    "system",
+                    $"Validated route from sender '{senderId}' to receiver '{operation.ReceiverId}'.",
+                    operation.ReceiverId!,
+                    nameof(ResourceKind.Receiver),
+                    null,
+                    JsonSerializer.Serialize(new { SenderId = senderId, ReceiverId = operation.ReceiverId, assessment.Status })),
+                cancellationToken);
+
+            if (assessment.Status == CompatibilityStatus.Incompatible)
             {
                 return ServiceResult.Failure($"Routing request for {operation.Layer} failed validation.");
             }
 
             await connectionClient.ApplyConnectionAsync(
-                new ConnectionRequest
-                {
-                    Operation = ConnectionOperation.Connect,
-                    ReceiverId = operation.ReceiverId!,
-                    SenderId = senderId,
-                    Activation = command.Activation,
-                    RequestedBy = command.RequestedBy,
-                    RequestedAtUtc = DateTimeOffset.UtcNow
-                },
+                CreateConnectRequest(operation.ReceiverId!, senderId, command.Activation, command.RequestedBy, sender, receiver),
                 cancellationToken);
         }
 
@@ -232,5 +249,50 @@ public sealed class RoutingService(
             cancellationToken);
 
         return ServiceResult.Success("Routing disconnect submitted.");
+    }
+
+    private static ConnectionRequest CreateConnectRequest(
+        string receiverId,
+        string senderId,
+        Domain.ValueObjects.ActivationRequest activation,
+        string requestedBy,
+        NmosSenderDto? sender,
+        NmosReceiverDto? receiver)
+    {
+        var transportParameters = SelectTransportParameters(receiver);
+
+        return new ConnectionRequest
+        {
+            Operation = ConnectionOperation.Connect,
+            ReceiverId = receiverId,
+            SenderId = senderId,
+            TransportFile = sender?.TransportFile,
+            TransportParameters = transportParameters.Count == 0
+                ? Array.Empty<IReadOnlyDictionary<string, string>>()
+                : new[] { transportParameters },
+            Activation = activation,
+            RequestedBy = requestedBy,
+            RequestedAtUtc = DateTimeOffset.UtcNow
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string> SelectTransportParameters(NmosReceiverDto? receiver)
+    {
+        if (receiver is null)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        if (receiver.Staged.TransportParameters.Count > 0)
+        {
+            return receiver.Staged.TransportParameters;
+        }
+
+        if (receiver.Active.TransportParameters.Count > 0)
+        {
+            return receiver.Active.TransportParameters;
+        }
+
+        return new Dictionary<string, string>();
     }
 }

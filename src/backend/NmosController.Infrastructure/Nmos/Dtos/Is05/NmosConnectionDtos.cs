@@ -52,6 +52,14 @@ internal sealed class NmosConnectionPatchRequestDto
     [JsonPropertyName("master_enable")]
     public bool MasterEnable { get; set; }
 
+    [JsonPropertyName("transport_params")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyCollection<Dictionary<string, object?>>? TransportParams { get; set; }
+
+    [JsonPropertyName("transport_file")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public NmosTransportFileDto? TransportFile { get; set; }
+
     [JsonPropertyName("activation")]
     public NmosPatchActivationDto Activation { get; set; } = new();
 }

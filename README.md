@@ -37,7 +37,7 @@ docker compose up --build
 
 Open:
 
-- Frontend: `http://localhost:8088`
+- Frontend: `http://localhost`
 - Backend API: `http://localhost:8080`
 - Swagger: `http://localhost:8080/swagger`
 - Mock NMOS fixture service: `http://localhost:8081`

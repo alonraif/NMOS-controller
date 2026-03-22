@@ -46,7 +46,11 @@ internal sealed class DatabaseInitializationHostedService(
 
     private static async Task SeedAsync(ControllerDbContext dbContext, NmosControllerOptions options, CancellationToken cancellationToken)
     {
-        if (!await dbContext.Registries.AnyAsync(cancellationToken))
+        var existingRegistry = await dbContext.Registries
+            .OrderBy(entity => entity.UpdatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existingRegistry is null)
         {
             dbContext.Registries.Add(new RegistryConfigurationEntity
             {
@@ -59,6 +63,17 @@ internal sealed class DatabaseInitializationHostedService(
                 IsEnabled = options.Registry.IsEnabled,
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             });
+        }
+        else
+        {
+            // Keep the persisted primary registry aligned with configured startup values.
+            existingRegistry.Name = options.Registry.Name;
+            existingRegistry.BaseUrl = options.Registry.BaseUrl;
+            existingRegistry.QueryApiVersion = options.Registry.QueryApiVersion;
+            existingRegistry.ConnectionApiVersion = options.Registry.ConnectionApiVersion;
+            existingRegistry.Mode = options.Mode;
+            existingRegistry.IsEnabled = options.Registry.IsEnabled;
+            existingRegistry.UpdatedAtUtc = DateTimeOffset.UtcNow;
         }
 
         if (!await dbContext.Presets.AnyAsync(cancellationToken))

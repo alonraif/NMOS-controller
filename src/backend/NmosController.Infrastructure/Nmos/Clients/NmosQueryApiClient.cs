@@ -16,6 +16,8 @@ internal sealed class NmosQueryApiClient(
     INmosConnectionClient connectionClient,
     ILogger<NmosQueryApiClient> logger) : INmosQueryClient
 {
+    private static readonly TimeSpan ManifestRequestTimeout = TimeSpan.FromSeconds(3);
+
     public async Task<TopologySnapshotDto> GetTopologySnapshotAsync(CancellationToken cancellationToken)
     {
         var registry = await registrySettingsResolver.GetAsync(cancellationToken);
@@ -33,40 +35,41 @@ internal sealed class NmosQueryApiClient(
         var devicesById = devices.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
         var flowsById = flows.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
 
-        var senderDtos = new List<NmosSenderDto>(senders.Count);
-        foreach (var sender in senders)
-        {
-            var device = devicesById.GetValueOrDefault(sender.DeviceId);
-            var flow = sender.FlowId is not null ? flowsById.GetValueOrDefault(sender.FlowId) : null;
-            var transportFile = await TryFetchTransportFileAsync(sender.ManifestHref, cancellationToken);
-            senderDtos.Add(
-                sender.ToDto(
+        var senderDtos = await Task.WhenAll(
+            senders.Select(async sender =>
+            {
+                var device = devicesById.GetValueOrDefault(sender.DeviceId);
+                var flow = sender.FlowId is not null ? flowsById.GetValueOrDefault(sender.FlowId) : null;
+                var flowDto = flow?.ToDto();
+                var transportFile = await TryFetchTransportFileAsync(sender.ManifestHref, cancellationToken);
+
+                return sender.ToDto(
                     device?.NodeId ?? string.Empty,
-                    flow?.ToDto().Format ?? new MediaFormatSummary(string.Empty, null, null, null, null, null),
+                    flowDto?.Format ?? new MediaFormatSummary(string.Empty, null, null, null, null, null),
                     transportFile,
-                    InferSignalType(flow?.ToDto().Format.Format),
+                    InferSignalType(flowDto?.Format.Format),
                     sender.Id,
                     sender.Label,
                     null,
                     "A",
-                    true));
-        }
+                    true);
+            }));
 
-        var receiverDtos = new List<NmosReceiverDto>(receivers.Count);
-        foreach (var receiver in receivers)
-        {
-            var device = devicesById.GetValueOrDefault(receiver.DeviceId);
-            var receiverState = await connectionClient.GetReceiverStateAsync(receiver.Id, cancellationToken);
-            receiverDtos.Add(
-                receiver.ToDto(
+        var receiverDtos = await Task.WhenAll(
+            receivers.Select(async receiver =>
+            {
+                var device = devicesById.GetValueOrDefault(receiver.DeviceId);
+                var receiverState = await connectionClient.GetReceiverStateAsync(receiver.Id, cancellationToken);
+
+                return receiver.ToDto(
                     device?.NodeId ?? string.Empty,
                     receiverState?.Constraints ?? ConstraintSet.Empty,
                     receiverState?.Active ?? new ConnectionState(null, null, new Dictionary<string, string>(), null),
                     receiverState?.Staged ?? new ConnectionState(null, null, new Dictionary<string, string>(), null),
                     InferSignalType(receiver.Format),
                     receiver.Id,
-                    receiver.Label));
-        }
+                    receiver.Label);
+            }));
 
         return new TopologySnapshotDto(
             new RegistrySummaryDto(
@@ -123,9 +126,12 @@ internal sealed class NmosQueryApiClient(
             return null;
         }
 
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(ManifestRequestTimeout);
+
         try
         {
-            using var response = await httpClient.GetAsync(manifestHref, cancellationToken);
+            using var response = await httpClient.GetAsync(manifestHref, timeoutCts.Token);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
@@ -138,6 +144,13 @@ internal sealed class NmosQueryApiClient(
             var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/sdp";
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             return new TransportFileData(contentType, content);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(
+                "Timed out fetching sender transport file from {ManifestHref}. Continuing without transport file.",
+                manifestHref);
+            return null;
         }
         catch (Exception ex)
         {

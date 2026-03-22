@@ -16,7 +16,7 @@ docker compose up --build
 
 3. Open:
 
-- Frontend: `http://localhost:8088`
+- Frontend: `http://localhost`
 - Backend API: `http://localhost:8080`
 - Swagger: `http://localhost:8080/swagger`
 - Mock NMOS fixture service: `http://localhost:8081`
@@ -32,7 +32,7 @@ docker compose up --build
 - `frontend`
   - static React application served by Nginx
 - `mock-nmos`
-  - serves SDP fixture assets used by the mock lab workflow
+  - serves SDP fixture assets plus a lightweight seeded IS-04/IS-05 mock registry
 
 ## Ubuntu Notes
 

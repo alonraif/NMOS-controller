@@ -8,7 +8,34 @@ internal sealed class RegistrySettingsResolver(
     ControllerDbContext dbContext,
     IOptionsMonitor<NmosControllerOptions> optionsMonitor) : IRegistrySettingsResolver
 {
+    private readonly SemaphoreSlim _lock = new(1, 1);
+    private ResolvedRegistrySettings? _cachedSettings;
+
     public async Task<ResolvedRegistrySettings> GetAsync(CancellationToken cancellationToken)
+    {
+        if (_cachedSettings is not null)
+        {
+            return _cachedSettings;
+        }
+
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_cachedSettings is not null)
+            {
+                return _cachedSettings;
+            }
+
+            _cachedSettings = await ResolveSettingsAsync(cancellationToken);
+            return _cachedSettings;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    private async Task<ResolvedRegistrySettings> ResolveSettingsAsync(CancellationToken cancellationToken)
     {
         var registry = await dbContext.Registries
             .AsNoTracking()
@@ -17,9 +44,11 @@ internal sealed class RegistrySettingsResolver(
 
         if (registry is not null && Uri.TryCreate(registry.BaseUrl, UriKind.Absolute, out var persistedUri))
         {
+            var configuredConnectionUri = ResolveConnectionUri(optionsMonitor.CurrentValue.Registry.ConnectionBaseUrl, persistedUri);
             return new ResolvedRegistrySettings(
                 registry.Name,
                 persistedUri,
+                configuredConnectionUri,
                 registry.QueryApiVersion,
                 registry.ConnectionApiVersion,
                 registry.Mode,
@@ -34,9 +63,15 @@ internal sealed class RegistrySettingsResolver(
         return new ResolvedRegistrySettings(
             options.Registry.Name,
             baseUri,
+            ResolveConnectionUri(options.Registry.ConnectionBaseUrl, baseUri),
             options.Registry.QueryApiVersion,
             options.Registry.ConnectionApiVersion,
             options.Mode,
             options.Registry.IsEnabled);
     }
+
+    private static Uri ResolveConnectionUri(string? configuredConnectionBaseUrl, Uri fallbackBaseUri) =>
+        Uri.TryCreate(configuredConnectionBaseUrl, UriKind.Absolute, out var configuredConnectionUri)
+            ? configuredConnectionUri
+            : fallbackBaseUri;
 }
