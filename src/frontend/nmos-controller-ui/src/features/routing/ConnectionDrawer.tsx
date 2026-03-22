@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useConnectReceiver, useDisconnectReceiver, useValidateRoute } from "../../api/hooks";
 import type { ActivationModeType, NmosReceiver, NmosSender } from "../../api/types";
 import { Drawer } from "../../components/Drawer";
@@ -31,11 +31,25 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
     return senders.filter((sender) => sender.transport === receiver.transport);
   }, [receiver, senders]);
 
+  useEffect(() => {
+    if (!receiver) {
+      setSelectedSenderId("");
+      setValidationMessage("");
+      setActivationMode("Immediate");
+      return;
+    }
+
+    setSelectedSenderId(receiver.active.senderId ?? "");
+    setValidationMessage("");
+    setActivationMode("Immediate");
+  }, [receiver]);
+
   if (!receiver) {
     return null;
   }
 
   const activeReceiver = receiver;
+  const isBusy = validateMutation.isPending || connectMutation.isPending || disconnectMutation.isPending;
 
   async function handleValidate() {
     if (!selectedSenderId) {
@@ -43,17 +57,23 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
       return;
     }
 
-    const result = await validateMutation.mutateAsync({
-      senderId: selectedSenderId,
-      receiverId: activeReceiver.id,
-      activationMode,
-    });
+    setValidationMessage("Validating route...");
 
-    setValidationMessage(
-      result.issues.length > 0
-        ? result.issues.map((issue) => issue.message).join(" ")
-        : `Validation status: ${result.status}.`,
-    );
+    try {
+      const result = await validateMutation.mutateAsync({
+        senderId: selectedSenderId,
+        receiverId: activeReceiver.id,
+        activationMode,
+      });
+
+      setValidationMessage(
+        result.issues.length > 0
+          ? result.issues.map((issue) => issue.message).join(" ")
+          : `Validation status: ${result.status}.`,
+      );
+    } catch (error) {
+      setValidationMessage(error instanceof Error ? error.message : "Validation failed.");
+    }
   }
 
   async function handleConnect() {
@@ -62,28 +82,40 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
       return;
     }
 
-    await connectMutation.mutateAsync({
-      receiverId: activeReceiver.id,
-      payload: {
-        senderId: selectedSenderId,
-        requestedBy: operatorName,
-        activationMode,
-      },
-    });
+    setValidationMessage("Submitting connection request...");
 
-    onClose();
+    try {
+      await connectMutation.mutateAsync({
+        receiverId: activeReceiver.id,
+        payload: {
+          senderId: selectedSenderId,
+          requestedBy: operatorName,
+          activationMode,
+        },
+      });
+
+      onClose();
+    } catch (error) {
+      setValidationMessage(error instanceof Error ? error.message : "Connection failed.");
+    }
   }
 
   async function handleDisconnect() {
-    await disconnectMutation.mutateAsync({
-      receiverId: activeReceiver.id,
-      payload: {
-        requestedBy: operatorName,
-        activationMode,
-      },
-    });
+    setValidationMessage("Submitting disconnect request...");
 
-    onClose();
+    try {
+      await disconnectMutation.mutateAsync({
+        receiverId: activeReceiver.id,
+        payload: {
+          requestedBy: operatorName,
+          activationMode,
+        },
+      });
+
+      onClose();
+    } catch (error) {
+      setValidationMessage(error instanceof Error ? error.message : "Disconnect failed.");
+    }
   }
 
   return (
@@ -105,7 +137,11 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
 
         <label className="form-field">
           <span>Activation</span>
-          <select value={activationMode} onChange={(event) => setActivationMode(event.target.value as ActivationModeType)}>
+          <select
+            value={activationMode}
+            onChange={(event) => setActivationMode(event.target.value as ActivationModeType)}
+            disabled={isBusy}
+          >
             <option value="Immediate">Immediate</option>
             <option value="ScheduledAbsolute">Scheduled Absolute</option>
             <option value="ScheduledRelative">Scheduled Relative</option>
@@ -114,7 +150,7 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
 
         <label className="form-field">
           <span>Sender</span>
-          <select value={selectedSenderId} onChange={(event) => setSelectedSenderId(event.target.value)}>
+          <select value={selectedSenderId} onChange={(event) => setSelectedSenderId(event.target.value)} disabled={isBusy}>
             <option value="">Select sender</option>
             {compatibleSenders.map((sender) => (
               <option key={sender.id} value={sender.id}>
@@ -125,14 +161,14 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
         </label>
 
         <div className="button-row">
-          <button className="ghost-button" type="button" onClick={() => void handleValidate()}>
-            Validate
+          <button className="ghost-button" type="button" onClick={() => void handleValidate()} disabled={isBusy}>
+            {validateMutation.isPending ? "Validating..." : "Validate"}
           </button>
-          <button className="primary-button" type="button" onClick={() => void handleConnect()}>
-            Connect
+          <button className="primary-button" type="button" onClick={() => void handleConnect()} disabled={isBusy}>
+            {connectMutation.isPending ? "Connecting..." : "Connect"}
           </button>
-          <button className="danger-button" type="button" onClick={() => void handleDisconnect()}>
-            Disconnect
+          <button className="danger-button" type="button" onClick={() => void handleDisconnect()} disabled={isBusy}>
+            {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
           </button>
         </div>
 
