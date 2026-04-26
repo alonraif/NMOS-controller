@@ -58,6 +58,7 @@ public sealed class MockNmosFixtureStore
                 Active = receiver.Active,
                 Staged = receiver.Staged,
                 IsConnectable = receiver.IsConnectable,
+                ConnectionApiBaseUrl = receiver.ConnectionApiBaseUrl,
                 LastSeenAtUtc = receiver.LastSeenAtUtc
             };
         }

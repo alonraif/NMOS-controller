@@ -15,6 +15,8 @@ public static class DomainToApplicationMapper
             registry.Id,
             registry.Name,
             registry.BaseUrl.ToString(),
+            registry.ConnectionBaseUrl,
+            registry.ConnectionBaseUrls,
             registry.QueryApiVersion,
             registry.ConnectionApiVersion,
             registry.Mode,
@@ -143,7 +145,8 @@ public static class DomainToApplicationMapper
             GetSignalType(receiver.Format),
             receiver.Id,
             receiver.Label,
-            receiver.LastSeenAtUtc);
+            receiver.LastSeenAtUtc,
+            receiver.ConnectionApiBaseUrl);
 
     private static string GetSignalType(MediaFormatSummary format) =>
         format.Format switch

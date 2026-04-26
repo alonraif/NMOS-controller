@@ -101,11 +101,11 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
     {
         public Task<RegistrySettingsDto?> GetAsync(CancellationToken cancellationToken) =>
             Task.FromResult<RegistrySettingsDto?>(
-                new RegistrySettingsDto(Guid.Empty, "Mock Registry", "http://mock", "v1.3", "v1.1", ControllerMode.Mock, true, DateTimeOffset.UtcNow));
+                new RegistrySettingsDto(Guid.Empty, "Mock Registry", "http://mock", null, null, "v1.3", "v1.1", ControllerMode.Mock, true, DateTimeOffset.UtcNow));
 
         public Task<RegistrySettingsDto> SaveAsync(UpdateRegistrySettingsCommand command, CancellationToken cancellationToken) =>
             Task.FromResult(
-                new RegistrySettingsDto(Guid.Empty, command.Name, command.BaseUrl, command.QueryApiVersion, command.ConnectionApiVersion, command.Mode, command.IsEnabled, DateTimeOffset.UtcNow));
+                new RegistrySettingsDto(Guid.Empty, command.Name, command.BaseUrl, command.ConnectionBaseUrl, command.ConnectionBaseUrls, command.QueryApiVersion, command.ConnectionApiVersion, command.Mode, command.IsEnabled, DateTimeOffset.UtcNow));
     }
 
     private sealed class FakeRoutingService : IRoutingService

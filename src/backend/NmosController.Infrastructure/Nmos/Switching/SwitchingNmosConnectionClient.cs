@@ -24,11 +24,11 @@ internal sealed class SwitchingNmosConnectionClient(
         await liveClient.ApplyConnectionAsync(request, cancellationToken);
     }
 
-    public async Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, CancellationToken cancellationToken)
+    public async Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, string? connectionApiBaseUrl, CancellationToken cancellationToken)
     {
         var settings = await registrySettingsResolver.GetAsync(cancellationToken);
         return settings.Mode == ControllerMode.Mock
-            ? await mockClient.GetReceiverStateAsync(receiverId, cancellationToken)
-            : await liveClient.GetReceiverStateAsync(receiverId, cancellationToken);
+            ? await mockClient.GetReceiverStateAsync(receiverId, connectionApiBaseUrl, cancellationToken)
+            : await liveClient.GetReceiverStateAsync(receiverId, connectionApiBaseUrl, cancellationToken);
     }
 }

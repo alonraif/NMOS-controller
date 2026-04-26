@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -46,6 +47,8 @@ internal sealed class DatabaseInitializationHostedService(
 
     private static async Task SeedAsync(ControllerDbContext dbContext, NmosControllerOptions options, CancellationToken cancellationToken)
     {
+        await EnsureSchemaFixupsAsync(dbContext, cancellationToken);
+
         var existingRegistry = await dbContext.Registries
             .OrderBy(entity => entity.UpdatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
@@ -57,23 +60,14 @@ internal sealed class DatabaseInitializationHostedService(
                 Id = Guid.NewGuid(),
                 Name = options.Registry.Name,
                 BaseUrl = options.Registry.BaseUrl,
+                ConnectionBaseUrl = options.Registry.ConnectionBaseUrl,
+                ConnectionBaseUrls = options.Registry.ConnectionBaseUrls,
                 QueryApiVersion = options.Registry.QueryApiVersion,
                 ConnectionApiVersion = options.Registry.ConnectionApiVersion,
                 Mode = options.Mode,
                 IsEnabled = options.Registry.IsEnabled,
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             });
-        }
-        else
-        {
-            // Keep the persisted primary registry aligned with configured startup values.
-            existingRegistry.Name = options.Registry.Name;
-            existingRegistry.BaseUrl = options.Registry.BaseUrl;
-            existingRegistry.QueryApiVersion = options.Registry.QueryApiVersion;
-            existingRegistry.ConnectionApiVersion = options.Registry.ConnectionApiVersion;
-            existingRegistry.Mode = options.Mode;
-            existingRegistry.IsEnabled = options.Registry.IsEnabled;
-            existingRegistry.UpdatedAtUtc = DateTimeOffset.UtcNow;
         }
 
         if (!await dbContext.Presets.AnyAsync(cancellationToken))
@@ -111,5 +105,23 @@ internal sealed class DatabaseInitializationHostedService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task EnsureSchemaFixupsAsync(ControllerDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var database = dbContext.Database;
+        if (!database.IsNpgsql())
+        {
+            return;
+        }
+
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"ConnectionBaseUrl\" character varying(1024);",
+            [],
+            cancellationToken);
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"ConnectionBaseUrls\" character varying(4096);",
+            [],
+            cancellationToken);
     }
 }

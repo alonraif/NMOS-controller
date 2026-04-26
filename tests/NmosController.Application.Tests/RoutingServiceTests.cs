@@ -161,7 +161,7 @@ public sealed class RoutingServiceTests
             return Task.CompletedTask;
         }
 
-        public Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, CancellationToken cancellationToken) =>
+        public Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, string? connectionApiBaseUrl, CancellationToken cancellationToken) =>
             Task.FromResult<NmosReceiver?>(null);
     }
 

@@ -98,7 +98,8 @@ internal static class NmosResourceMapper
         ConnectionState staged,
         string signalType,
         string routingDestinationId,
-        string routingDestinationLabel) =>
+        string routingDestinationLabel,
+        string? connectionApiBaseUrl) =>
         new(
             dto.Id,
             nodeId,
@@ -119,7 +120,8 @@ internal static class NmosResourceMapper
             signalType,
             routingDestinationId,
             routingDestinationLabel,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            connectionApiBaseUrl);
 
     public static NmosReceiver ToDomainReceiver(
         string receiverId,

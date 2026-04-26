@@ -44,11 +44,12 @@ internal sealed class RegistrySettingsResolver(
 
         if (registry is not null && Uri.TryCreate(registry.BaseUrl, UriKind.Absolute, out var persistedUri))
         {
-            var configuredConnectionUri = ResolveConnectionUri(optionsMonitor.CurrentValue.Registry.ConnectionBaseUrl, persistedUri);
+            var configuredConnectionUri = ResolveConnectionUri(registry.ConnectionBaseUrl ?? optionsMonitor.CurrentValue.Registry.ConnectionBaseUrl, persistedUri);
             return new ResolvedRegistrySettings(
                 registry.Name,
                 persistedUri,
                 configuredConnectionUri,
+                registry.ConnectionBaseUrls ?? optionsMonitor.CurrentValue.Registry.ConnectionBaseUrls,
                 registry.QueryApiVersion,
                 registry.ConnectionApiVersion,
                 registry.Mode,
@@ -64,6 +65,7 @@ internal sealed class RegistrySettingsResolver(
             options.Registry.Name,
             baseUri,
             ResolveConnectionUri(options.Registry.ConnectionBaseUrl, baseUri),
+            options.Registry.ConnectionBaseUrls,
             options.Registry.QueryApiVersion,
             options.Registry.ConnectionApiVersion,
             options.Mode,

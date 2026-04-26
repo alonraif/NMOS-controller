@@ -34,6 +34,7 @@ internal static class TopologyMappingExtensions
             Active = receiver.Active,
             Staged = receiver.Staged,
             IsConnectable = receiver.IsConnectable,
+            ConnectionApiBaseUrl = receiver.ConnectionApiBaseUrl,
             LastSeenAtUtc = receiver.LastSeenAtUtc
         };
 }

@@ -2,12 +2,15 @@
 
 ## Objective
 
-NmosController is a controller-only platform for NMOS-managed broadcast IP environments. It integrates with external NMOS registries and device connection APIs to provide discovery, normalized topology, validation, routing control, presets, auditability, and mock lab simulation.
+NmosController is a controller-only platform for NMOS-managed broadcast IP environments. It integrates with NMOS registries and device connection APIs to provide discovery, normalized topology, validation, routing control, presets, auditability, and mock lab simulation.
+
+In live deployments, the same physical or virtual server is expected to also host a real NMOS Registry service as a separate process or container. That registry service is outside this repository's application boundary, but it is part of the intended server role.
 
 The system boundary is explicit:
 
 - In scope: NMOS discovery, controller state modeling, validation, connection control, operator UI, presets, audit, observability, persistence of controller-owned data.
-- Out of scope: implementing an NMOS Registry, Node, Sender, Receiver, or media-plane transport behavior.
+- Out of scope for this repository: implementing an NMOS Registry, Node, Sender, Receiver, or media-plane transport behavior.
+- In scope for deployment: running a separate real NMOS Registry service on the controller server and configuring the controller to use it in `Live` mode.
 
 ## Architecture Summary
 
@@ -85,9 +88,10 @@ Mock mode replaces live NMOS integration with fixture-backed query and connectio
 
 ```text
 +---------------------------+        +---------------------------+
-| React Operator UI         |        | External NMOS Registry    |
+| React Operator UI         |        | Real NMOS Registry        |
 | nmos-controller-ui        |<------>| IS-04 Query API           |
-+-------------+-------------+        +---------------------------+
++-------------+-------------+        | Separate service on host  |
+              |                      +---------------------------+
               |
               v
 +-------------+-------------+        +---------------------------+

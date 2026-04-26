@@ -19,6 +19,7 @@ public sealed class RegistryOptions
     public string Name { get; set; } = "Local Mock Registry";
     public string BaseUrl { get; set; } = "http://localhost:8081";
     public string? ConnectionBaseUrl { get; set; }
+    public string? ConnectionBaseUrls { get; set; }
     public string QueryApiVersion { get; set; } = "v1.3";
     public string ConnectionApiVersion { get; set; } = "v1.1";
     public bool IsEnabled { get; set; } = true;

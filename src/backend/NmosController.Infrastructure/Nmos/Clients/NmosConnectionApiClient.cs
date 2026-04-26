@@ -24,8 +24,9 @@ internal sealed class NmosConnectionApiClient(
     public async Task ApplyConnectionAsync(ConnectionRequest request, CancellationToken cancellationToken)
     {
         var registry = await registrySettingsResolver.GetAsync(cancellationToken);
+        var connectionBaseUrl = ResolveConnectionBaseUri(request.ConnectionApiBaseUrl, registry.ConnectionBaseUrl);
         var stagedEndpoint = new Uri(
-            registry.ConnectionBaseUrl,
+            connectionBaseUrl,
             $"/x-nmos/connection/{registry.ConnectionApiVersion.TrimStart('/')}/single/receivers/{request.ReceiverId}/staged");
         var transportParams = request.Operation == Domain.Enums.ConnectionOperation.Connect
             ? BuildTransportParams(request.TransportParameters, request.TransportFile, stagedEndpoint.Host)
@@ -74,11 +75,12 @@ internal sealed class NmosConnectionApiClient(
         }
     }
 
-    public async Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, CancellationToken cancellationToken)
+    public async Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, string? connectionApiBaseUrl, CancellationToken cancellationToken)
     {
         var registry = await registrySettingsResolver.GetAsync(cancellationToken);
+        var resolvedConnectionBaseUrl = ResolveConnectionBaseUri(connectionApiBaseUrl, registry.ConnectionBaseUrl);
         var baseUri = new Uri(
-            registry.ConnectionBaseUrl,
+            resolvedConnectionBaseUrl,
             $"/x-nmos/connection/{registry.ConnectionApiVersion.TrimStart('/')}/single/receivers/{receiverId}/");
 
         var constraints = await TryGetAsync<NmosReceiverConstraintsDto>(new Uri(baseUri, "constraints"), cancellationToken);
@@ -91,6 +93,11 @@ internal sealed class NmosConnectionApiClient(
             NmosResourceMapper.MapConnectionState(active),
             NmosResourceMapper.MapConnectionState(staged));
     }
+
+    private static Uri ResolveConnectionBaseUri(string? receiverConnectionBaseUrl, Uri fallbackConnectionBaseUrl) =>
+        Uri.TryCreate(receiverConnectionBaseUrl, UriKind.Absolute, out var resolvedConnectionBaseUrl)
+            ? resolvedConnectionBaseUrl
+            : fallbackConnectionBaseUrl;
 
     private async Task<T?> GetAsync<T>(Uri uri, CancellationToken cancellationToken)
     {

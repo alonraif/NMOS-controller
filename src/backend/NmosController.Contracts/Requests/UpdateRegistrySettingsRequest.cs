@@ -13,6 +13,11 @@ public sealed class UpdateRegistrySettingsRequest
     [Url]
     public string BaseUrl { get; set; } = string.Empty;
 
+    [Url]
+    public string? ConnectionBaseUrl { get; set; }
+
+    public string? ConnectionBaseUrls { get; set; }
+
     [Required]
     public string QueryApiVersion { get; set; } = "v1.3";
 

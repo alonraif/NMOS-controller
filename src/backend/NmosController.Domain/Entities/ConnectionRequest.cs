@@ -12,6 +12,7 @@ public sealed class ConnectionRequest
     public IReadOnlyCollection<IReadOnlyDictionary<string, string>> TransportParameters { get; init; } =
         Array.Empty<IReadOnlyDictionary<string, string>>();
     public TransportFileData? TransportFile { get; init; }
+    public string? ConnectionApiBaseUrl { get; init; }
     public ActivationRequest Activation { get; init; } = ActivationRequest.Immediate(DateTimeOffset.UtcNow);
     public string RequestedBy { get; init; } = "system";
     public DateTimeOffset RequestedAtUtc { get; init; } = DateTimeOffset.UtcNow;

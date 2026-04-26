@@ -2,7 +2,9 @@
 
 Production-grade NMOS Controller for SMPTE ST 2110 environments.
 
-This repository implements an NMOS controller that discovers, models, monitors, validates, and controls external NMOS-capable registries and devices. It does not implement an NMOS Registry, Node, Sender, or Receiver.
+This repository implements an NMOS controller that discovers, models, monitors, validates, and controls NMOS-capable registries and devices. It does not implement an NMOS Registry, Node, Sender, or Receiver.
+
+For lab and production deployments, the controller host is expected to also host a real NMOS Registry service as a separate process or container. The controller backend should point at that real registry in `Live` mode. The bundled `mock-nmos` service is only for local development and demos.
 
 ## Scope
 
@@ -102,6 +104,22 @@ That gives you:
 - SDP assets served by the `mock-nmos` sidecar
 - logical destinations and grouped sources for matrix and XY workflows
 - 2022-7 A/B path metadata for graph and route inspection views
+
+Do not use the bundled mock registry as the live registry endpoint. In a real setup, run a production NMOS Registry on this server and configure:
+
+- `NMOS_CONTROLLER__MODE=Live`
+- `NMOS_CONTROLLER__REGISTRY__BASEURL=<real registry IS-04 Query API host>`
+- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL=<single IS-05 base URL override, optional>`
+- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS=<comma-separated IS-05 fallback bases for multi-device estates, optional>`
+
+A live registry Compose file is included:
+
+```bash
+docker-compose stop mock-nmos
+docker-compose -f docker-compose.live-registry.yml up -d
+```
+
+It runs a separate `real-nmos-registry` service using the `rhastie/nmos-cpp` image and `docker/real-nmos-registry/registry.json`.
 
 ## Documentation
 

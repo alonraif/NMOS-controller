@@ -109,11 +109,15 @@ public sealed class RoutingService(
 
     public async Task<ServiceResult> DisconnectAsync(RouteDisconnectCommand command, CancellationToken cancellationToken)
     {
+        var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
+        var receiver = topology.Receivers.FirstOrDefault(x => x.Id == command.ReceiverId);
+
         await connectionClient.ApplyConnectionAsync(
             new ConnectionRequest
             {
                 Operation = ConnectionOperation.Disconnect,
                 ReceiverId = command.ReceiverId,
+                ConnectionApiBaseUrl = receiver?.ConnectionApiBaseUrl,
                 Activation = command.Activation,
                 RequestedBy = command.RequestedBy,
                 RequestedAtUtc = DateTimeOffset.UtcNow
@@ -225,11 +229,13 @@ public sealed class RoutingService(
 
         foreach (var operation in operations.Where(x => x.Enabled && x.ReceiverId is not null))
         {
+            var receiver = snapshot.Receivers.FirstOrDefault(x => x.Id == operation.ReceiverId);
             await connectionClient.ApplyConnectionAsync(
                 new ConnectionRequest
                 {
                     Operation = ConnectionOperation.Disconnect,
                     ReceiverId = operation.ReceiverId!,
+                    ConnectionApiBaseUrl = receiver?.ConnectionApiBaseUrl,
                     Activation = command.Activation,
                     RequestedBy = command.RequestedBy,
                     RequestedAtUtc = DateTimeOffset.UtcNow
@@ -270,6 +276,7 @@ public sealed class RoutingService(
             TransportParameters = transportParameters.Count == 0
                 ? Array.Empty<IReadOnlyDictionary<string, string>>()
                 : new[] { transportParameters },
+            ConnectionApiBaseUrl = receiver?.ConnectionApiBaseUrl,
             Activation = activation,
             RequestedBy = requestedBy,
             RequestedAtUtc = DateTimeOffset.UtcNow

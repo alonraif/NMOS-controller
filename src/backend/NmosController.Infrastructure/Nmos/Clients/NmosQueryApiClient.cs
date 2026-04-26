@@ -33,6 +33,14 @@ internal sealed class NmosQueryApiClient(
         var receivers = await GetAsync<List<NmosReceiverResourceDto>>(new Uri(queryBase, "receivers"), cancellationToken) ?? [];
 
         var devicesById = devices.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
+        var connectionBaseByDeviceId = devices.ToDictionary(
+            x => x.Id,
+            ResolveConnectionBaseUrl,
+            StringComparer.OrdinalIgnoreCase);
+        var candidateConnectionBaseUrls = BuildCandidateConnectionBaseUrls(
+            devices,
+            registry.ConnectionBaseUrl,
+            registry.ConnectionBaseUrls);
         var flowsById = flows.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
 
         var senderDtos = await Task.WhenAll(
@@ -59,7 +67,11 @@ internal sealed class NmosQueryApiClient(
             receivers.Select(async receiver =>
             {
                 var device = devicesById.GetValueOrDefault(receiver.DeviceId);
-                var receiverState = await connectionClient.GetReceiverStateAsync(receiver.Id, cancellationToken);
+                var receiverConnectionBaseUrl = connectionBaseByDeviceId.GetValueOrDefault(receiver.DeviceId);
+                var effectiveConnectionBaseUrl = receiverConnectionBaseUrl
+                    ?? candidateConnectionBaseUrls.FirstOrDefault()
+                    ?? registry.ConnectionBaseUrl.ToString();
+                var receiverState = await connectionClient.GetReceiverStateAsync(receiver.Id, effectiveConnectionBaseUrl, cancellationToken);
 
                 return receiver.ToDto(
                     device?.NodeId ?? string.Empty,
@@ -68,7 +80,8 @@ internal sealed class NmosQueryApiClient(
                     receiverState?.Staged ?? new ConnectionState(null, null, new Dictionary<string, string>(), null),
                     InferSignalType(receiver.Format),
                     receiver.Id,
-                    receiver.Label);
+                    receiver.Label,
+                    effectiveConnectionBaseUrl);
             }));
 
         return new TopologySnapshotDto(
@@ -98,6 +111,79 @@ internal sealed class NmosQueryApiClient(
             "urn:x-nmos:format:data" => "Ancillary",
             _ => "Unknown"
         };
+
+    private static IReadOnlyCollection<string> BuildCandidateConnectionBaseUrls(
+        IReadOnlyCollection<NmosDeviceResourceDto> devices,
+        Uri registryConnectionBaseUrl,
+        string? configuredConnectionBaseUrls)
+    {
+        var candidates = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddCandidate(string? candidate)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return;
+            }
+
+            if (seen.Add(candidate))
+            {
+                candidates.Add(candidate);
+            }
+        }
+
+        foreach (var device in devices)
+        {
+            var controlBaseUrl = ResolveConnectionBaseUrl(device);
+            AddCandidate(controlBaseUrl);
+        }
+
+        if (!string.IsNullOrWhiteSpace(configuredConnectionBaseUrls))
+        {
+            foreach (var candidate in configuredConnectionBaseUrls.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (Uri.TryCreate(candidate, UriKind.Absolute, out var parsed))
+                {
+                    AddCandidate($"{parsed.Scheme}://{parsed.Authority}");
+                }
+            }
+        }
+
+        AddCandidate($"{registryConnectionBaseUrl.Scheme}://{registryConnectionBaseUrl.Authority}");
+        return candidates.ToArray();
+    }
+
+    internal static string? ResolveConnectionBaseUrl(NmosDeviceResourceDto device)
+    {
+        var controls = device.Controls;
+        if (controls is null || controls.Count == 0)
+        {
+            return null;
+        }
+
+        static bool IsPreferredConnectionControlType(string? controlType)
+        {
+            if (string.IsNullOrWhiteSpace(controlType))
+            {
+                return false;
+            }
+
+            return controlType.Contains("urn:x-nmos:control:sr-ctrl/", StringComparison.OrdinalIgnoreCase)
+                || controlType.Contains("urn:x-nmos:control:cm-ctrl/", StringComparison.OrdinalIgnoreCase);
+        }
+
+        var preferredControl = controls.FirstOrDefault(x => IsPreferredConnectionControlType(x.Type))
+            ?? controls.FirstOrDefault(x =>
+                x.Href is not null && x.Href.Contains("/x-nmos/connection/", StringComparison.OrdinalIgnoreCase));
+
+        if (!Uri.TryCreate(preferredControl?.Href, UriKind.Absolute, out var controlUri))
+        {
+            return null;
+        }
+
+        return $"{controlUri.Scheme}://{controlUri.Authority}";
+    }
 
     private async Task<T?> GetAsync<T>(Uri uri, CancellationToken cancellationToken)
     {

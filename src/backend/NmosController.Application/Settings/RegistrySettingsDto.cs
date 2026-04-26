@@ -6,6 +6,8 @@ public sealed record RegistrySettingsDto(
     Guid Id,
     string Name,
     string BaseUrl,
+    string? ConnectionBaseUrl,
+    string? ConnectionBaseUrls,
     string QueryApiVersion,
     string ConnectionApiVersion,
     ControllerMode Mode,

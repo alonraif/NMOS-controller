@@ -8,6 +8,6 @@ public sealed class MockNmosConnectionClient(MockNmosFixtureStore fixtureStore) 
     public Task ApplyConnectionAsync(ConnectionRequest request, CancellationToken cancellationToken) =>
         fixtureStore.ApplyConnectionAsync(request, cancellationToken);
 
-    public Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, CancellationToken cancellationToken) =>
+    public Task<NmosReceiver?> GetReceiverStateAsync(string receiverId, string? connectionApiBaseUrl, CancellationToken cancellationToken) =>
         fixtureStore.GetReceiverAsync(receiverId, cancellationToken);
 }
