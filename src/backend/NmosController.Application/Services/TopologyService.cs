@@ -75,6 +75,8 @@ public sealed class TopologyService(
         return null;
     }
 
+    public void InvalidateSnapshot() => memoryCache.Remove(CacheKey);
+
     private async Task<TopologySnapshotDto> GetSnapshotAsync(bool forceRefresh, CancellationToken cancellationToken)
     {
         if (!forceRefresh && memoryCache.TryGetValue<TopologySnapshotDto>(CacheKey, out var cached) && cached is not null)

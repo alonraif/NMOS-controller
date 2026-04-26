@@ -93,8 +93,7 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
           activationMode,
         },
       });
-
-      onClose();
+      setValidationMessage("Connection request submitted.");
     } catch (error) {
       setValidationMessage(error instanceof Error ? error.message : "Connection failed.");
     }
@@ -111,8 +110,7 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
           activationMode,
         },
       });
-
-      onClose();
+      setValidationMessage("Disconnect request submitted.");
     } catch (error) {
       setValidationMessage(error instanceof Error ? error.message : "Disconnect failed.");
     }

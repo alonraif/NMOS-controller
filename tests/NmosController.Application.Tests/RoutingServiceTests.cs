@@ -149,6 +149,10 @@ public sealed class RoutingServiceTests
 
         public Task<ResourceDetailDto?> GetResourceAsync(string resourceId, CancellationToken cancellationToken) =>
             Task.FromResult<ResourceDetailDto?>(null);
+
+        public void InvalidateSnapshot()
+        {
+        }
     }
 
     private sealed class RecordingConnectionClient : INmosConnectionClient

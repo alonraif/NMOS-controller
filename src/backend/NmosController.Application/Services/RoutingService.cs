@@ -92,6 +92,7 @@ public sealed class RoutingService(
         await connectionClient.ApplyConnectionAsync(
             CreateConnectRequest(command.ReceiverId, command.SenderId, command.Activation, command.RequestedBy, sender, receiver),
             cancellationToken);
+        topologyService.InvalidateSnapshot();
 
         await auditService.RecordAsync(
             new CreateAuditEntryCommand(
@@ -123,6 +124,7 @@ public sealed class RoutingService(
                 RequestedAtUtc = DateTimeOffset.UtcNow
             },
             cancellationToken);
+        topologyService.InvalidateSnapshot();
 
         await auditService.RecordAsync(
             new CreateAuditEntryCommand(
@@ -189,6 +191,7 @@ public sealed class RoutingService(
             await connectionClient.ApplyConnectionAsync(
                 CreateConnectRequest(operation.ReceiverId!, senderId, command.Activation, command.RequestedBy, sender, receiver),
                 cancellationToken);
+            topologyService.InvalidateSnapshot();
         }
 
         await auditService.RecordAsync(
@@ -241,6 +244,7 @@ public sealed class RoutingService(
                     RequestedAtUtc = DateTimeOffset.UtcNow
                 },
                 cancellationToken);
+            topologyService.InvalidateSnapshot();
         }
 
         await auditService.RecordAsync(

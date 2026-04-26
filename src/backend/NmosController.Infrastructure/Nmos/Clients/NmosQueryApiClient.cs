@@ -17,6 +17,7 @@ internal sealed class NmosQueryApiClient(
     ILogger<NmosQueryApiClient> logger) : INmosQueryClient
 {
     private static readonly TimeSpan ManifestRequestTimeout = TimeSpan.FromSeconds(3);
+    private const int ManifestRequestAttempts = 2;
 
     public async Task<TopologySnapshotDto> GetTopologySnapshotAsync(CancellationToken cancellationToken)
     {
@@ -212,36 +213,53 @@ internal sealed class NmosQueryApiClient(
             return null;
         }
 
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(ManifestRequestTimeout);
-
-        try
+        for (var attempt = 1; attempt <= ManifestRequestAttempts; attempt++)
         {
-            using var response = await httpClient.GetAsync(manifestHref, timeoutCts.Token);
-            if (!response.IsSuccessStatusCode)
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(ManifestRequestTimeout);
+
+            try
             {
-                logger.LogWarning(
-                    "Failed to fetch sender transport file from {ManifestHref}. Status {StatusCode}",
-                    manifestHref,
-                    (int)response.StatusCode);
-                return null;
-            }
+                using var response = await httpClient.GetAsync(manifestHref, timeoutCts.Token);
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (attempt == ManifestRequestAttempts)
+                    {
+                        logger.LogWarning(
+                            "Failed to fetch sender transport file from {ManifestHref}. Status {StatusCode}",
+                            manifestHref,
+                            (int)response.StatusCode);
+                        return null;
+                    }
 
-            var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/sdp";
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return new TransportFileData(contentType, content);
+                    continue;
+                }
+
+                var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/sdp";
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return new TransportFileData(contentType, content);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                if (attempt == ManifestRequestAttempts)
+                {
+                    logger.LogWarning(
+                        "Timed out fetching sender transport file from {ManifestHref} after {Attempts} attempts. Continuing without transport file.",
+                        manifestHref,
+                        ManifestRequestAttempts);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (attempt == ManifestRequestAttempts)
+                {
+                    logger.LogWarning(ex, "Failed to fetch sender transport file from {ManifestHref}", manifestHref);
+                    return null;
+                }
+            }
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            logger.LogWarning(
-                "Timed out fetching sender transport file from {ManifestHref}. Continuing without transport file.",
-                manifestHref);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to fetch sender transport file from {ManifestHref}", manifestHref);
-            return null;
-        }
+
+        return null;
     }
 }

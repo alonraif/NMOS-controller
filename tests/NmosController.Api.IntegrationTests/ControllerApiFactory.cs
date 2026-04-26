@@ -95,6 +95,10 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
 
         public Task<ResourceDetailDto?> GetResourceAsync(string resourceId, CancellationToken cancellationToken) =>
             Task.FromResult<ResourceDetailDto?>(null);
+
+        public void InvalidateSnapshot()
+        {
+        }
     }
 
     private sealed class FakeRegistryService : IRegistryService

@@ -20,6 +20,7 @@ internal sealed class NmosConnectionApiClient(
     ILogger<NmosConnectionApiClient> logger) : INmosConnectionClient
 {
     private static readonly TimeSpan ReceiverStateRequestTimeout = TimeSpan.FromSeconds(3);
+    private const int ReceiverStateRequestAttempts = 2;
 
     public async Task ApplyConnectionAsync(ConnectionRequest request, CancellationToken cancellationToken)
     {
@@ -28,12 +29,12 @@ internal sealed class NmosConnectionApiClient(
         var stagedEndpoint = new Uri(
             connectionBaseUrl,
             $"/x-nmos/connection/{registry.ConnectionApiVersion.TrimStart('/')}/single/receivers/{request.ReceiverId}/staged");
-        var transportParams = request.Operation == Domain.Enums.ConnectionOperation.Connect
-            ? BuildTransportParams(request.TransportParameters, request.TransportFile, stagedEndpoint.Host)
-            : null;
         var shouldDriveByTransportFile = request.Operation == Domain.Enums.ConnectionOperation.Connect
             && request.TransportFile is not null
             && request.TransportParameters.Count == 0;
+        var transportParams = request.Operation == Domain.Enums.ConnectionOperation.Connect && !shouldDriveByTransportFile
+            ? BuildTransportParams(request.TransportParameters, request.TransportFile, stagedEndpoint.Host)
+            : null;
 
         var payload = new NmosConnectionPatchRequestDto
         {
@@ -139,23 +140,34 @@ internal sealed class NmosConnectionApiClient(
 
     private async Task<T?> TryGetAsync<T>(Uri uri, CancellationToken cancellationToken)
     {
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(ReceiverStateRequestTimeout);
+        for (var attempt = 1; attempt <= ReceiverStateRequestAttempts; attempt++)
+        {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(ReceiverStateRequestTimeout);
 
-        try
-        {
-            return await GetAsync<T>(uri, timeoutCts.Token);
+            try
+            {
+                return await GetAsync<T>(uri, timeoutCts.Token);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                if (attempt == ReceiverStateRequestAttempts)
+                {
+                    logger.LogWarning("NMOS GET {Uri} timed out after {Attempts} attempts. Continuing with partial receiver state.", uri, ReceiverStateRequestAttempts);
+                    return default;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                if (attempt == ReceiverStateRequestAttempts)
+                {
+                    logger.LogWarning(ex, "NMOS GET {Uri} failed after {Attempts} attempts. Continuing with partial receiver state.", uri, ReceiverStateRequestAttempts);
+                    return default;
+                }
+            }
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            logger.LogWarning("NMOS GET {Uri} timed out. Continuing with partial receiver state.", uri);
-            return default;
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "NMOS GET {Uri} failed. Continuing with partial receiver state.", uri);
-            return default;
-        }
+
+        return default;
     }
 
     private static IReadOnlyCollection<Dictionary<string, object?>>? BuildTransportParams(
