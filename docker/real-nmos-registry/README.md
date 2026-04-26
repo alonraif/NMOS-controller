@@ -11,17 +11,14 @@ Default endpoints:
 - Query WebSocket API: `ws://<host>:8082/`
 - nmos-cpp admin UI, if enabled by the image: `http://<host>:8081/admin`
 
-The live registry listens on host port `8081` so it can replace the development `mock-nmos` service without changing controller settings. Stop `mock-nmos` before starting the live registry.
+The live registry listens on host port `8081` and can be run with the compose file below.
 
 ```bash
-docker-compose stop mock-nmos
 docker-compose -f docker-compose.live-registry.yml up -d
 ```
 
 Then point the controller at the registry:
 
 ```env
-NMOS_CONTROLLER__MODE=Live
 NMOS_CONTROLLER__REGISTRY__BASEURL=http://192.168.170.2:8081
 ```
-

@@ -1,5 +1,3 @@
-using NmosController.Domain.Enums;
-
 namespace NmosController.Application.Settings;
 
 public sealed record RegistrySettingsDto(
@@ -10,6 +8,5 @@ public sealed record RegistrySettingsDto(
     string? ConnectionBaseUrls,
     string QueryApiVersion,
     string ConnectionApiVersion,
-    ControllerMode Mode,
     bool IsEnabled,
     DateTimeOffset UpdatedAtUtc);

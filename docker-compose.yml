@@ -17,18 +17,6 @@ services:
       timeout: 5s
       retries: 20
 
-  mock-nmos:
-    build:
-      context: .
-      dockerfile: docker/mock-nmos/Dockerfile
-    container_name: nmos-controller-mock-nmos
-    restart: unless-stopped
-    network_mode: host
-    environment:
-      MOCK_NMOS_HOST: ${MOCK_NMOS_HOST:-127.0.0.1}
-      MOCK_NMOS_PORT: ${MOCK_NMOS_PORT:-8081}
-      MOCK_NMOS_INTERNAL_BASE_URL: ${MOCK_NMOS_INTERNAL_BASE_URL:-http://127.0.0.1:8081}
-
   backend:
     build:
       context: .
@@ -39,8 +27,7 @@ services:
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:${BACKEND_PORT:-8080}
       ASPNETCORE_ENVIRONMENT: Production
-      NMOS_CONTROLLER__MODE: ${NMOS_CONTROLLER__MODE:-Mock}
-      NMOS_CONTROLLER__REGISTRY__NAME: ${NMOS_CONTROLLER__REGISTRY__NAME:-Local Mock Registry}
+      NMOS_CONTROLLER__REGISTRY__NAME: ${NMOS_CONTROLLER__REGISTRY__NAME:-Live Registry}
       NMOS_CONTROLLER__REGISTRY__BASEURL: ${NMOS_CONTROLLER__REGISTRY__BASEURL:-http://127.0.0.1:8081}
       NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL: ${NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL:-}
       NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS: ${NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS:-}
@@ -49,13 +36,10 @@ services:
       NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING: ${NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING:-Host=127.0.0.1;Port=5432;Database=nmos_controller;Username=nmos;Password=nmos}
       NMOS_CONTROLLER__HTTP__TIMEOUTSECONDS: ${NMOS_CONTROLLER__HTTP__TIMEOUTSECONDS:-10}
       NMOS_CONTROLLER__HTTP__RETRYATTEMPTS: ${NMOS_CONTROLLER__HTTP__RETRYATTEMPTS:-3}
-      NMOS_CONTROLLER__MOCKLAB__FIXTUREPATH: ${NMOS_CONTROLLER__MOCKLAB__FIXTUREPATH:-Nmos/Mock/Fixtures/topology-snapshot.json}
       NMOS_CONTROLLER__CORS__ALLOWEDORIGINS: ${NMOS_CONTROLLER__CORS__ALLOWEDORIGINS:-http://localhost:5173,http://localhost,http://localhost:8080,http://172.16.32.58}
     depends_on:
       postgres:
         condition: service_healthy
-      mock-nmos:
-        condition: service_started
 
   frontend:
     build:

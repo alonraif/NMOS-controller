@@ -1,5 +1,3 @@
-using NmosController.Domain.Enums;
-
 namespace NmosController.Application.Topology;
 
 public sealed record RegistrySummaryDto(
@@ -8,5 +6,4 @@ public sealed record RegistrySummaryDto(
     string BaseUrl,
     string QueryApiVersion,
     string ConnectionApiVersion,
-    ControllerMode Mode,
     bool IsEnabled);

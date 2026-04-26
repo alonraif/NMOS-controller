@@ -1,5 +1,3 @@
-using NmosController.Domain.Enums;
-
 namespace NmosController.Application.Settings;
 
 public sealed record UpdateRegistrySettingsCommand(
@@ -9,5 +7,4 @@ public sealed record UpdateRegistrySettingsCommand(
     string? ConnectionBaseUrls,
     string QueryApiVersion,
     string ConnectionApiVersion,
-    ControllerMode Mode,
     bool IsEnabled);

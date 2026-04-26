@@ -6,7 +6,6 @@ using NmosController.Application.Routing;
 using NmosController.Application.Services;
 using NmosController.Application.Topology;
 using NmosController.Domain.Entities;
-using NmosController.Domain.Enums;
 using NmosController.Domain.Services;
 using NmosController.Domain.ValueObjects;
 
@@ -129,7 +128,7 @@ public sealed class RoutingServiceTests
 
             return Task.FromResult(
                 new TopologyGraphDto(
-                    new RegistrySummaryDto(Guid.Empty, "registry", "http://mock", "v1.3", "v1.1", ControllerMode.Mock, true),
+                    new RegistrySummaryDto(Guid.Empty, "registry", "http://mock", "v1.3", "v1.1", true),
                     Array.Empty<NmosNodeDto>(),
                     Array.Empty<NmosDeviceDto>(),
                     Array.Empty<NmosSourceDto>(),

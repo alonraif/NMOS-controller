@@ -29,7 +29,7 @@ export function DashboardPage() {
     <div className="stack-xl">
       <PageHeader
         title="Dashboard"
-        subtitle="Current registry mode, controller topology density, and recent operator actions."
+        subtitle="Current registry status, controller topology density, and recent operator actions."
       />
 
       <div className="stats-grid">
@@ -55,9 +55,7 @@ export function DashboardPage() {
         <Card title="Registry Snapshot" subtitle="Current controller view of the external registry.">
           <div className="stack">
             <div className="inline-status">
-              <StatusBadge tone={topology.registry.mode === "Mock" ? "warning" : "success"}>
-                {topology.registry.mode}
-              </StatusBadge>
+              <StatusBadge tone="success">Live</StatusBadge>
               <StatusBadge tone={topology.registry.isEnabled ? "success" : "danger"}>
                 {topology.registry.isEnabled ? "Enabled" : "Disabled"}
               </StatusBadge>

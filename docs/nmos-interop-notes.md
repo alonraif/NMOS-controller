@@ -9,20 +9,6 @@
 - Scheduled activation is represented internally, but the initial UI focuses on immediate activation.
 - Logical broadcast destinations can now aggregate multiple NMOS receivers so the router can expose matrix and XY workflows with audio and ancillary breakaway.
 
-## Mock Lab Mode
-
-Mock lab mode is the default bootstrap path.
-
-It consists of:
-
-- internal fixture-backed query and connection adapters
-- mutable in-memory connection state built from `topology-snapshot.json`
-- seeded registry settings set to `Mock`
-- a small sidecar service that serves SDP manifests referenced by the fixtures
-- logical routing destinations, grouped source labels, and 2022-7 A/B metadata for graph and matrix rendering
-
-This means the UI and API can be demonstrated without a real registry or device estate.
-
 ## Known Interoperability Gaps
 
 - DNS-SD registry discovery is not yet implemented.

@@ -19,7 +19,6 @@ public static class DomainToApplicationMapper
             registry.ConnectionBaseUrls,
             registry.QueryApiVersion,
             registry.ConnectionApiVersion,
-            registry.Mode,
             registry.IsEnabled,
             registry.UpdatedAtUtc);
 
@@ -30,7 +29,6 @@ public static class DomainToApplicationMapper
             registry.BaseUrl.ToString(),
             registry.QueryApiVersion,
             registry.ConnectionApiVersion,
-            registry.Mode,
             registry.IsEnabled);
 
     public static AuditEntryDto ToDto(this AuditEntry entry) =>

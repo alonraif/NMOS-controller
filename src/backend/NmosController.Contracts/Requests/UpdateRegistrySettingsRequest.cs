@@ -1,6 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using NmosController.Domain.Enums;
-
 namespace NmosController.Contracts.Requests;
 
 public sealed class UpdateRegistrySettingsRequest
@@ -23,8 +21,6 @@ public sealed class UpdateRegistrySettingsRequest
 
     [Required]
     public string ConnectionApiVersion { get; set; } = "v1.1";
-
-    public ControllerMode Mode { get; set; } = ControllerMode.Mock;
 
     public bool IsEnabled { get; set; } = true;
 }

@@ -16,7 +16,6 @@ internal sealed class RegistryConfigurationEntityConfiguration : IEntityTypeConf
         builder.Property(x => x.ConnectionBaseUrls).HasMaxLength(4096);
         builder.Property(x => x.QueryApiVersion).HasMaxLength(32).IsRequired();
         builder.Property(x => x.ConnectionApiVersion).HasMaxLength(32).IsRequired();
-        builder.Property(x => x.Mode).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(x => x.UpdatedAtUtc).IsRequired();
     }
 }

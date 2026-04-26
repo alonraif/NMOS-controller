@@ -39,12 +39,10 @@ export function AppLayout() {
           ))}
         </nav>
         <section className="sidebar-card">
-          <div className="sidebar-label">Registry Mode</div>
+          <div className="sidebar-label">Registry</div>
           <div className="sidebar-row">
             <strong>{registry?.name ?? "Unavailable"}</strong>
-            <StatusBadge tone={registry?.mode === "Mock" ? "info" : "success"}>
-              {registry?.mode ?? "Unknown"}
-            </StatusBadge>
+            <StatusBadge tone="success">Live</StatusBadge>
           </div>
           <small>{registry?.baseUrl ?? "No registry configured"}</small>
         </section>
@@ -67,9 +65,7 @@ export function AppLayout() {
             <StatusBadge tone={registry?.isEnabled ? "success" : "danger"}>
               {registry?.isEnabled ? "Enabled" : "Disabled"}
             </StatusBadge>
-            <StatusBadge tone={registry?.mode === "Mock" ? "warning" : "info"}>
-              {registry?.mode === "Mock" ? "Mock Demo Data" : "Live NMOS"}
-            </StatusBadge>
+            <StatusBadge tone="info">Live NMOS</StatusBadge>
           </div>
         </header>
         <main className="page-content">

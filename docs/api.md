@@ -35,11 +35,10 @@ Request body for `PUT /registry`:
 
 ```json
 {
-  "name": "Local Mock Registry",
-  "baseUrl": "http://mock-nmos:8081",
+  "name": "Live Registry",
+  "baseUrl": "http://registry-host:8081",
   "queryApiVersion": "v1.3",
   "connectionApiVersion": "v1.1",
-  "mode": "Mock",
   "isEnabled": true
 }
 ```
@@ -173,5 +172,4 @@ Create or update preset:
 - The `/routing` UI uses a preview/take workflow. Preview state is frontend-managed in v1 and `TAKE` submits immediate IS-05 style activation.
 - Breakaway routing is modeled by separate `videoSourceId`, `audioSourceId`, and `ancillarySourceId` fields on `/routing/connect`.
 - 2022-7 awareness is modeled through grouped senders and graph edges that expose `path` `A|B` plus redundancy health badges like `A/B OK`, `A only`, `B only`, and `No signal`.
-- In `Mock` mode, the controller uses its fixture-backed adapters rather than live IS-04 or IS-05 calls.
 - Enum values are serialized as strings so the UI and API remain explicit and stable.

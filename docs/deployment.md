@@ -19,7 +19,6 @@ docker compose up --build
 - Frontend: `http://localhost`
 - Backend API: `http://localhost:8080`
 - Swagger: `http://localhost:8080/swagger`
-- Mock NMOS fixture service: `http://localhost:8081`
 
 ## Stack Components
 
@@ -31,10 +30,6 @@ docker compose up --build
   - seeds default registry settings and a demo preset
 - `frontend`
   - static React application served by Nginx
-- `mock-nmos`
-  - development/demo only
-  - serves SDP fixture assets plus a lightweight seeded IS-04/IS-05 mock registry
-  - must not be treated as the real live registry endpoint
 
 ## Real Registry Host Role
 
@@ -48,20 +43,15 @@ The controller application remains controller-only. It does not implement the re
 For live operation:
 
 - run the real registry service on the appropriate media/control network interface
-- set `NMOS_CONTROLLER__MODE=Live`
 - set `NMOS_CONTROLLER__REGISTRY__BASEURL` to the real registry Query API base URL
 - prefer per-device IS-05 discovery from IS-04 `device.controls[].href`
 - set `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL` only for single-endpoint IS-05 override scenarios
 - set `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS` (comma-separated) when fallback IS-05 gateways are needed across multiple devices
 - after first startup, manage registry settings through `/api/v1/registry`; persisted DB settings are the runtime source of truth
-- disable or ignore the `mock-nmos` service so it cannot be confused with the live registry
-
-If `http://<registry-host>/health.json` reports `mock-nmos`, the controller is still pointed at the development mock registry, not the intended real registry.
 
 This repository includes a Compose definition for the separate real registry service:
 
 ```bash
-docker-compose stop mock-nmos
 docker-compose -f docker-compose.live-registry.yml up -d
 ```
 
@@ -108,13 +98,11 @@ docker compose up --build -d
 
 Primary environment variables:
 
-- `NMOS_CONTROLLER__MODE`
 - `NMOS_CONTROLLER__REGISTRY__BASEURL`
 - `NMOS_CONTROLLER__REGISTRY__QUERYAPIVERSION`
 - `NMOS_CONTROLLER__REGISTRY__CONNECTIONAPIVERSION`
 - `NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING`
 - `NMOS_CONTROLLER__HTTP__TIMEOUTSECONDS`
-- `NMOS_CONTROLLER__MOCKLAB__FIXTUREPATH`
 - `NMOS_CONTROLLER__CORS__ALLOWEDORIGINS`
 - `VITE_API_BASE_URL`
 - `NMOS_REGISTRY_IMAGE`
@@ -122,10 +110,8 @@ Primary environment variables:
 ## Production Guidance
 
 - Put TLS termination in front of the frontend and backend.
-- Set `NMOS_CONTROLLER__MODE=Live` for real registries.
 - Host the real NMOS Registry service on this server as a separate service from the controller.
 - Point `NMOS_CONTROLLER__REGISTRY__BASEURL` at that real NMOS registry or registry gateway.
-- Stop using the bundled `mock-nmos` service for live registry traffic.
 - Review CORS origins and do not leave broad development origins enabled in production.
 - Replace demo seed data if operator environments require a clean initial state.
 

@@ -1,5 +1,3 @@
-using NmosController.Domain.Enums;
-
 namespace NmosController.Infrastructure.Persistence.Entities;
 
 public sealed class RegistryConfigurationEntity
@@ -11,7 +9,6 @@ public sealed class RegistryConfigurationEntity
     public string? ConnectionBaseUrls { get; set; }
     public string QueryApiVersion { get; set; } = "v1.3";
     public string ConnectionApiVersion { get; set; } = "v1.1";
-    public ControllerMode Mode { get; set; } = ControllerMode.Mock;
     public bool IsEnabled { get; set; } = true;
     public DateTimeOffset UpdatedAtUtc { get; set; }
 }

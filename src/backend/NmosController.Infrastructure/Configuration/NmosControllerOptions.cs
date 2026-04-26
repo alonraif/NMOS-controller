@@ -1,22 +1,18 @@
-using NmosController.Domain.Enums;
-
 namespace NmosController.Infrastructure.Configuration;
 
 public sealed class NmosControllerOptions
 {
     public const string SectionName = "NMOS_CONTROLLER";
 
-    public ControllerMode Mode { get; set; } = ControllerMode.Mock;
     public RegistryOptions Registry { get; set; } = new();
     public PostgresOptions Postgres { get; set; } = new();
     public NmosHttpOptions Http { get; set; } = new();
-    public MockLabOptions MockLab { get; set; } = new();
     public CorsOptions Cors { get; set; } = new();
 }
 
 public sealed class RegistryOptions
 {
-    public string Name { get; set; } = "Local Mock Registry";
+    public string Name { get; set; } = "Live Registry";
     public string BaseUrl { get; set; } = "http://localhost:8081";
     public string? ConnectionBaseUrl { get; set; }
     public string? ConnectionBaseUrls { get; set; }
@@ -35,11 +31,6 @@ public sealed class NmosHttpOptions
 {
     public int TimeoutSeconds { get; set; } = 10;
     public int RetryAttempts { get; set; } = 3;
-}
-
-public sealed class MockLabOptions
-{
-    public string FixturePath { get; set; } = "Nmos/Mock/Fixtures/topology-snapshot.json";
 }
 
 public sealed class CorsOptions

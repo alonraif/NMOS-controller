@@ -1,4 +1,3 @@
-export type ControllerMode = "Live" | "Mock";
 export type CompatibilityStatus = "Compatible" | "Warning" | "Incompatible";
 export type ActivationModeType = "Immediate" | "ScheduledRelative" | "ScheduledAbsolute";
 export type ResourceKind =
@@ -21,11 +20,12 @@ export interface RegistrySummary {
   baseUrl: string;
   queryApiVersion: string;
   connectionApiVersion: string;
-  mode: ControllerMode;
   isEnabled: boolean;
 }
 
 export interface RegistrySettings extends RegistrySummary {
+  connectionBaseUrl: string | null;
+  connectionBaseUrls: string | null;
   updatedAtUtc: string;
 }
 
@@ -339,8 +339,9 @@ export interface ExecutePresetPayload {
 export interface UpdateRegistryPayload {
   name: string;
   baseUrl: string;
+  connectionBaseUrl?: string | null;
+  connectionBaseUrls?: string | null;
   queryApiVersion: string;
   connectionApiVersion: string;
-  mode: ControllerMode;
   isEnabled: boolean;
 }

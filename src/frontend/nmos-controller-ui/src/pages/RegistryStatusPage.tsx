@@ -25,10 +25,10 @@ export function RegistryStatusPage() {
 
   return (
     <div className="stack-xl">
-      <PageHeader title="Registry Status" subtitle="Resolved controller registry configuration and operating mode." />
+      <PageHeader title="Registry Status" subtitle="Resolved controller registry configuration." />
       <Card title={registry.name} subtitle="Controller-owned registry settings.">
         <div className="inline-status">
-          <StatusBadge tone={registry.mode === "Mock" ? "warning" : "success"}>{registry.mode}</StatusBadge>
+          <StatusBadge tone="success">Live</StatusBadge>
           <StatusBadge tone={registry.isEnabled ? "success" : "danger"}>
             {registry.isEnabled ? "Enabled" : "Disabled"}
           </StatusBadge>

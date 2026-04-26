@@ -26,12 +26,12 @@ internal sealed class NmosQueryApiClient(
 
         logger.LogInformation("Fetching NMOS topology snapshot from {RegistryBaseUrl}", queryBase);
 
-        var nodes = await GetAsync<List<NmosNodeResourceDto>>(new Uri(queryBase, "nodes"), cancellationToken) ?? [];
-        var devices = await GetAsync<List<NmosDeviceResourceDto>>(new Uri(queryBase, "devices"), cancellationToken) ?? [];
-        var sources = await GetAsync<List<NmosSourceResourceDto>>(new Uri(queryBase, "sources"), cancellationToken) ?? [];
-        var flows = await GetAsync<List<NmosFlowResourceDto>>(new Uri(queryBase, "flows"), cancellationToken) ?? [];
-        var senders = await GetAsync<List<NmosSenderResourceDto>>(new Uri(queryBase, "senders"), cancellationToken) ?? [];
-        var receivers = await GetAsync<List<NmosReceiverResourceDto>>(new Uri(queryBase, "receivers"), cancellationToken) ?? [];
+        var nodes = await GetPagedAsync<NmosNodeResourceDto>(new Uri(queryBase, "nodes"), cancellationToken);
+        var devices = await GetPagedAsync<NmosDeviceResourceDto>(new Uri(queryBase, "devices"), cancellationToken);
+        var sources = await GetPagedAsync<NmosSourceResourceDto>(new Uri(queryBase, "sources"), cancellationToken);
+        var flows = await GetPagedAsync<NmosFlowResourceDto>(new Uri(queryBase, "flows"), cancellationToken);
+        var senders = await GetPagedAsync<NmosSenderResourceDto>(new Uri(queryBase, "senders"), cancellationToken);
+        var receivers = await GetPagedAsync<NmosReceiverResourceDto>(new Uri(queryBase, "receivers"), cancellationToken);
 
         var devicesById = devices.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
         var connectionBaseByDeviceId = devices.ToDictionary(
@@ -92,7 +92,6 @@ internal sealed class NmosQueryApiClient(
                 registry.BaseUrl.ToString(),
                 registry.QueryApiVersion,
                 registry.ConnectionApiVersion,
-                registry.Mode,
                 registry.IsEnabled),
             nodes.Select(x => x.ToDto()).ToArray(),
             devices.Select(x => x.ToDto()).ToArray(),
@@ -204,6 +203,98 @@ internal sealed class NmosQueryApiClient(
         }
 
         return await response.Content.ReadFromJsonAsync<T>(NmosJsonSerializer.Default, cancellationToken);
+    }
+
+    private async Task<List<TItem>> GetPagedAsync<TItem>(Uri firstPageUri, CancellationToken cancellationToken)
+    {
+        var aggregated = new List<TItem>();
+        var currentPageUri = firstPageUri;
+        var seenPageUris = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var isInitialRequest = true;
+
+        while (seenPageUris.Add(currentPageUri.AbsoluteUri))
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, currentPageUri);
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var payload = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogError(
+                    "NMOS GET {Uri} failed with status {StatusCode}. Body: {Payload}",
+                    currentPageUri,
+                    (int)response.StatusCode,
+                    payload);
+
+                response.EnsureSuccessStatusCode();
+            }
+
+            var page = await response.Content.ReadFromJsonAsync<List<TItem>>(NmosJsonSerializer.Default, cancellationToken) ?? [];
+            aggregated.AddRange(page);
+
+            // Some registries return the most recent page for a bare collection request.
+            // In that case we should jump to rel="first" and iterate forward with rel="next".
+            if (isInitialRequest)
+            {
+                isInitialRequest = false;
+                var firstLink = TryGetLinkUri(response, firstPageUri, "first");
+                if (firstLink is not null && !string.Equals(firstLink.AbsoluteUri, currentPageUri.AbsoluteUri, StringComparison.OrdinalIgnoreCase))
+                {
+                    aggregated.Clear();
+                    currentPageUri = firstLink;
+                    continue;
+                }
+            }
+
+            var nextLink = TryGetLinkUri(response, firstPageUri, "next");
+            if (nextLink is null)
+            {
+                break;
+            }
+
+            currentPageUri = nextLink;
+        }
+
+        return aggregated;
+    }
+
+    private static Uri? TryGetLinkUri(HttpResponseMessage response, Uri requestUri, string relation)
+    {
+        if (!response.Headers.TryGetValues("Link", out var linkHeaders))
+        {
+            return null;
+        }
+
+        foreach (var headerValue in linkHeaders)
+        {
+            foreach (var rawSegment in headerValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (!rawSegment.Contains($"rel=\"{relation}\"", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var startIndex = rawSegment.IndexOf('<');
+                var endIndex = rawSegment.IndexOf('>');
+                if (startIndex < 0 || endIndex <= startIndex + 1)
+                {
+                    continue;
+                }
+
+                var nextUriCandidate = rawSegment[(startIndex + 1)..endIndex];
+                if (Uri.TryCreate(nextUriCandidate, UriKind.Absolute, out var absoluteUri))
+                {
+                    return absoluteUri;
+                }
+
+                if (Uri.TryCreate(requestUri, nextUriCandidate, out var relativeUri))
+                {
+                    return relativeUri;
+                }
+            }
+        }
+
+        return null;
     }
 
     private async Task<TransportFileData?> TryFetchTransportFileAsync(string? manifestHref, CancellationToken cancellationToken)

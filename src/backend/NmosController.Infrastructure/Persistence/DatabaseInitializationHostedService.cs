@@ -64,7 +64,6 @@ internal sealed class DatabaseInitializationHostedService(
                 ConnectionBaseUrls = options.Registry.ConnectionBaseUrls,
                 QueryApiVersion = options.Registry.QueryApiVersion,
                 ConnectionApiVersion = options.Registry.ConnectionApiVersion,
-                Mode = options.Mode,
                 IsEnabled = options.Registry.IsEnabled,
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             });
@@ -84,7 +83,7 @@ internal sealed class DatabaseInitializationHostedService(
             {
                 Id = Guid.NewGuid(),
                 Name = "Demo Audio Route",
-                Description = "Connect Program Audio to the Audio Room destination in mock lab mode.",
+                Description = "Connect Program Audio to the Audio Room destination.",
                 RoutesJson = JsonSerializer.Serialize(demoRoutes, NmosJsonSerializer.Default),
                 CreatedAtUtc = DateTimeOffset.UtcNow,
                 UpdatedAtUtc = DateTimeOffset.UtcNow

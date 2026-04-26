@@ -29,7 +29,6 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
             baseUri,
             entity.QueryApiVersion,
             entity.ConnectionApiVersion,
-            entity.Mode,
             entity.IsEnabled,
             entity.UpdatedAtUtc,
             entity.ConnectionBaseUrl,
@@ -54,7 +53,6 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
                 ConnectionBaseUrls = registry.ConnectionBaseUrls,
                 QueryApiVersion = registry.QueryApiVersion,
                 ConnectionApiVersion = registry.ConnectionApiVersion,
-                Mode = registry.Mode,
                 IsEnabled = registry.IsEnabled,
                 UpdatedAtUtc = registry.UpdatedAtUtc
             });
@@ -67,7 +65,6 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
             existing.ConnectionBaseUrls = registry.ConnectionBaseUrls;
             existing.QueryApiVersion = registry.QueryApiVersion;
             existing.ConnectionApiVersion = registry.ConnectionApiVersion;
-            existing.Mode = registry.Mode;
             existing.IsEnabled = registry.IsEnabled;
             existing.UpdatedAtUtc = registry.UpdatedAtUtc;
         }

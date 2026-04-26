@@ -35,7 +35,6 @@ public sealed class RegistryController(IRegistryService registryService) : Contr
                 request.ConnectionBaseUrls,
                 request.QueryApiVersion,
                 request.ConnectionApiVersion,
-                request.Mode,
                 request.IsEnabled),
             cancellationToken);
 

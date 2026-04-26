@@ -52,7 +52,6 @@ internal sealed class RegistrySettingsResolver(
                 registry.ConnectionBaseUrls ?? optionsMonitor.CurrentValue.Registry.ConnectionBaseUrls,
                 registry.QueryApiVersion,
                 registry.ConnectionApiVersion,
-                registry.Mode,
                 registry.IsEnabled);
         }
 
@@ -68,7 +67,6 @@ internal sealed class RegistrySettingsResolver(
             options.Registry.ConnectionBaseUrls,
             options.Registry.QueryApiVersion,
             options.Registry.ConnectionApiVersion,
-            options.Mode,
             options.Registry.IsEnabled);
     }
 

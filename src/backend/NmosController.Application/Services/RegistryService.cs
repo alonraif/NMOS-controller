@@ -31,7 +31,6 @@ public sealed class RegistryService(IRegistryRepository registryRepository) : IR
             baseUri,
             command.QueryApiVersion,
             command.ConnectionApiVersion,
-            command.Mode,
             command.IsEnabled,
             DateTimeOffset.UtcNow,
             normalizedConnectionBaseUrl,
