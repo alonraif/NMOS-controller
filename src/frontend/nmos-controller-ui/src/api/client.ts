@@ -4,6 +4,7 @@ import type {
   ConnectReceiverPayload,
   DisconnectReceiverPayload,
   ExecutePresetPayload,
+  HostResourceSnapshot,
   NmosReceiver,
   NmosSender,
   PresetSalvo,
@@ -30,23 +31,31 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
     ...init,
   });
+  const rawBody = await response.text();
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
-    try {
-      const problem = (await response.json()) as { detail?: string; title?: string };
-      message = problem.detail ?? problem.title ?? message;
-    } catch {
-      const text = await response.text();
-      if (text) {
-        message = text;
+    if (rawBody) {
+      try {
+        const problem = JSON.parse(rawBody) as { detail?: string; title?: string };
+        message = problem.detail ?? problem.title ?? message;
+      } catch {
+        message = rawBody;
       }
     }
 
     throw new Error(message);
   }
 
-  return (await response.json()) as T;
+  if (!rawBody) {
+    throw new Error("Request failed: empty response body.");
+  }
+
+  try {
+    return JSON.parse(rawBody) as T;
+  } catch {
+    throw new Error("Request failed: invalid JSON response body.");
+  }
 }
 
 function unwrap<T>(envelope: ApiEnvelope<T>): T {
@@ -71,6 +80,9 @@ export const api = {
   },
   async getRegistry() {
     return unwrap(await request<ApiEnvelope<RegistrySettings>>(`/registry`));
+  },
+  async getHostResources() {
+    return unwrap(await request<ApiEnvelope<HostResourceSnapshot>>(`/system/host`));
   },
   async updateRegistry(payload: UpdateRegistryPayload) {
     return unwrap(

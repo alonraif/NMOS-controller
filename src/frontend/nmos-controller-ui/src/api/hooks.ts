@@ -55,6 +55,14 @@ export function useRegistry() {
   });
 }
 
+export function useHostResources() {
+  return useQuery({
+    queryKey: queryKeys.hostResources(),
+    queryFn: () => api.getHostResources(),
+    refetchInterval: 10_000,
+  });
+}
+
 export function usePresets() {
   return useQuery({
     queryKey: queryKeys.presets(),

@@ -10,14 +10,16 @@ COPY src/backend/NmosController.Contracts/NmosController.Contracts.csproj src/ba
 COPY src/backend/NmosController.Domain/NmosController.Domain.csproj src/backend/NmosController.Domain/NmosController.Domain.csproj
 COPY src/backend/NmosController.Infrastructure/NmosController.Infrastructure.csproj src/backend/NmosController.Infrastructure/NmosController.Infrastructure.csproj
 
-RUN dotnet restore src/backend/NmosController.Api/NmosController.Api.csproj
+RUN dotnet restore src/backend/NmosController.Api/NmosController.Api.csproj --ignore-failed-sources
 
 COPY src/backend src/backend
 
 RUN dotnet publish src/backend/NmosController.Api/NmosController.Api.csproj \
+    --no-restore \
     -c Release \
     -o /app/publish \
-    /p:UseAppHost=false
+    /p:UseAppHost=false \
+    /p:RestoreIgnoreFailedSources=true
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app

@@ -5,6 +5,7 @@ export const queryKeys = {
   receivers: (refresh = false) => ["receivers", refresh] as const,
   resource: (resourceId: string) => ["resource", resourceId] as const,
   registry: () => ["registry"] as const,
+  hostResources: () => ["host-resources"] as const,
   presets: () => ["presets"] as const,
   preset: (presetId: string) => ["preset", presetId] as const,
   audit: (limit: number) => ["audit", limit] as const,

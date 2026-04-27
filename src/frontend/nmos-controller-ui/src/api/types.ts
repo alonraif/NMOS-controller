@@ -29,6 +29,16 @@ export interface RegistrySettings extends RegistrySummary {
   updatedAtUtc: string;
 }
 
+export interface HostResourceSnapshot {
+  cpuTotalPercent: number;
+  cpuAvailablePercent: number;
+  cpuUsedByControllerPercent: number;
+  memoryTotalBytes: number;
+  memoryAvailableBytes: number;
+  memoryUsedByControllerBytes: number;
+  sampledAtUtc: string;
+}
+
 export interface MediaFormatSummary {
   format: string;
   mediaType: string | null;

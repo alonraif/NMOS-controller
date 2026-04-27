@@ -43,6 +43,30 @@ Open:
 
 The default landing workflow is the `/routing` UI, which is split into `Router`, `Topology`, `XY Panel`, and `Inspector` tabs backed by one synchronized routing state layer.
 
+## Live UI Dev Mode (No Rebuilds)
+
+For frontend work with hot reload inside Docker, run compose with the dev override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# or: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+Open:
+
+- Frontend (Vite dev server): `http://localhost:5173`
+- Backend API: `http://localhost:8080`
+
+Notes:
+
+- UI file edits under `src/frontend/nmos-controller-ui` are reflected live without rebuilding images.
+- Stop with:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+# or: docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+```
+
 ## Repository Structure
 
 ```text

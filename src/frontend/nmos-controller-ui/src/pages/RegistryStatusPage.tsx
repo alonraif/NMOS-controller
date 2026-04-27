@@ -1,4 +1,4 @@
-import { useRegistry } from "../api/hooks";
+import { useRegistry, useTopology } from "../api/hooks";
 import { Card } from "../components/Card";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { KeyValueList } from "../components/KeyValueList";
@@ -8,6 +8,7 @@ import { StatusBadge } from "../components/StatusBadge";
 
 export function RegistryStatusPage() {
   const registryQuery = useRegistry();
+  const topologyQuery = useTopology();
 
   if (registryQuery.isLoading) {
     return <LoadingPanel />;
@@ -22,13 +23,23 @@ export function RegistryStatusPage() {
   }
 
   const registry = registryQuery.data;
+  const registryHealthLabel = topologyQuery.isError
+    ? "Unreachable"
+    : topologyQuery.isLoading && !topologyQuery.data
+      ? "Checking"
+      : "Healthy";
+  const registryHealthTone = topologyQuery.isError
+    ? "danger"
+    : topologyQuery.isLoading && !topologyQuery.data
+      ? "warning"
+      : "success";
 
   return (
     <div className="stack-xl">
       <PageHeader title="Registry Status" subtitle="Resolved controller registry configuration." />
       <Card title={registry.name} subtitle="Controller-owned registry settings.">
         <div className="inline-status">
-          <StatusBadge tone="success">Live</StatusBadge>
+          <StatusBadge tone={registryHealthTone}>{registryHealthLabel}</StatusBadge>
           <StatusBadge tone={registry.isEnabled ? "success" : "danger"}>
             {registry.isEnabled ? "Enabled" : "Disabled"}
           </StatusBadge>
