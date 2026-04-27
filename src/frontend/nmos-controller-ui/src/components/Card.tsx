@@ -4,12 +4,15 @@ interface CardProps {
   title?: string;
   subtitle?: string;
   actions?: ReactNode;
+  className?: string;
   children: ReactNode;
 }
 
-export function Card({ title, subtitle, actions, children }: CardProps) {
+export function Card({ title, subtitle, actions, className, children }: CardProps) {
+  const cardClassName = className ? `card ${className}` : "card";
+
   return (
-    <section className="card">
+    <section className={cardClassName}>
       {(title || actions) && (
         <header className="card-header">
           <div>

@@ -14,7 +14,7 @@ export function DashboardPage() {
   const topologyQuery = useTopology();
   const sendersQuery = useSenders();
   const receiversQuery = useReceivers();
-  const auditQuery = useAudit(6);
+  const auditQuery = useAudit(50);
   const resourceLabelsById = useMemo(() => {
     const topology = topologyQuery.data;
     const senders = sendersQuery.data ?? [];
@@ -101,7 +101,7 @@ export function DashboardPage() {
         />
       </div>
 
-      <Card title="History" subtitle="Latest controller actions and validations.">
+      <Card className="dashboard-history-card" title="History" subtitle="Latest controller actions and validations.">
         <div className="history-panel">
           <div className="history-toolbar">
             <SearchInput value={historySearch} onChange={setHistorySearch} placeholder="Search history" />

@@ -268,56 +268,58 @@ export function InventoryPage() {
     <div className="stack-xl">
       <PageHeader title="Inventory / Topology" subtitle="Normalized graph view across nodes, devices, flows, senders, and receivers." />
       <Card title="Inventory">
-        <div className="inventory-toolbar">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search resources" />
-          <div className="inventory-type-filters">
-            <span>Show only</span>
-            <div className="inventory-type-options">
-              {inventoryTypes.map((type) => (
-                <label key={type.value} className="inventory-type-option">
-                  <input
-                    type="checkbox"
-                    checked={selectedTypes.includes(type.value)}
-                    onChange={() => toggleType(type.value)}
-                  />
-                  {type.label}
-                </label>
-              ))}
+        <div className="inventory-card-body">
+          <div className="inventory-toolbar">
+            <SearchInput value={search} onChange={setSearch} placeholder="Search resources" />
+            <div className="inventory-type-filters">
+              <span>Show only</span>
+              <div className="inventory-type-options">
+                {inventoryTypes.map((type) => (
+                  <label key={type.value} className="inventory-type-option">
+                    <input
+                      type="checkbox"
+                      checked={selectedTypes.includes(type.value)}
+                      onChange={() => toggleType(type.value)}
+                    />
+                    {type.label}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-        {rows.length === 0 ? (
-          <EmptyState title="No matching resources" description="Adjust the search term or refresh the topology." />
-        ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Label</th>
-                <th>Connected</th>
-                <th>ID</th>
-                <th>Parent</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.type}-${row.id}`}>
-                  <td>{row.type}</td>
-                  <td>
-                    <ResourceHoverLink row={row} summary={resourceSummaries.get(row.id)} />
-                  </td>
-                  <td>
-                    <ConnectedIndicator isConnected={row.isConnected} />
-                  </td>
-                  <td className="mono">{row.id}</td>
-                  <td>
-                    <ParentHoverValue label={row.parentLabel} parentId={row.parentId} />
-                  </td>
+          {rows.length === 0 ? (
+            <EmptyState title="No matching resources" description="Adjust the search term or refresh the topology." />
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Label</th>
+                  <th>Connected</th>
+                  <th>ID</th>
+                  <th>Parent</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={`${row.type}-${row.id}`}>
+                    <td>{row.type}</td>
+                    <td>
+                      <ResourceHoverLink row={row} summary={resourceSummaries.get(row.id)} />
+                    </td>
+                    <td>
+                      <ConnectedIndicator isConnected={row.isConnected} />
+                    </td>
+                    <td className="mono">{row.id}</td>
+                    <td>
+                      <ParentHoverValue label={row.parentLabel} parentId={row.parentId} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </Card>
     </div>
   );

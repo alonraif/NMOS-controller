@@ -609,6 +609,10 @@ textarea {
   margin-bottom: 14px;
 }
 
+.inventory-card-body {
+  min-height: 620px;
+}
+
 .inventory-toolbar .search-input {
   min-width: 240px;
 }
@@ -1187,7 +1191,15 @@ textarea {
 .history-panel {
   display: grid;
   gap: 12px;
-  min-height: 420px;
+  min-height: 560px;
+}
+
+.dashboard-history-card {
+  min-height: 820px;
+}
+
+.dashboard-history-card .history-panel {
+  min-height: 740px;
 }
 
 .history-toolbar {
@@ -1198,9 +1210,13 @@ textarea {
 }
 
 .history-list {
-  max-height: 340px;
+  max-height: 480px;
   overflow: auto;
   padding-right: 4px;
+}
+
+.dashboard-history-card .history-list {
+  max-height: 660px;
 }
 
 .audit-line {
