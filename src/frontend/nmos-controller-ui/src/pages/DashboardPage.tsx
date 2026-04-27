@@ -1,31 +1,40 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAudit, useTopology } from "../api/hooks";
+import { useAudit, useReceivers, useSenders, useTopology } from "../api/hooks";
 import { Card } from "../components/Card";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { LoadingPanel } from "../components/LoadingPanel";
 import { PageHeader } from "../components/PageHeader";
+import { SearchInput } from "../components/SearchInput";
 
 export function DashboardPage() {
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyFrom, setHistoryFrom] = useState("");
+  const [historyTo, setHistoryTo] = useState("");
   const topologyQuery = useTopology();
+  const sendersQuery = useSenders();
+  const receiversQuery = useReceivers();
   const auditQuery = useAudit(6);
   const resourceLabelsById = useMemo(() => {
     const topology = topologyQuery.data;
-    if (!topology) {
+    const senders = sendersQuery.data ?? [];
+    const receivers = receiversQuery.data ?? [];
+    if (!topology && senders.length === 0 && receivers.length === 0) {
       return new Map<string, string>();
     }
 
     return new Map<string, string>([
-      ...topology.nodes.map((item) => [item.id, item.label] as const),
-      ...topology.devices.map((item) => [item.id, item.label] as const),
-      ...topology.sources.map((item) => [item.id, item.label] as const),
-      ...topology.flows.map((item) => [item.id, item.label] as const),
-      ...topology.senders.map((item) => [item.id, item.label] as const),
-      ...topology.receivers.map((item) => [item.id, item.label] as const),
-      ...topology.routingDestinations.map((item) => [item.id, item.label] as const),
+      ...(topology?.nodes ?? []).map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...(topology?.devices ?? []).map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...(topology?.sources ?? []).map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...(topology?.flows ?? []).map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...(topology?.senders ?? []).map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...(topology?.receivers ?? []).map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...(topology?.routingDestinations ?? []).map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...senders.map((item) => [item.id.toLowerCase(), item.label] as const),
+      ...receivers.map((item) => [item.id.toLowerCase(), item.label] as const),
     ]);
-  }, [topologyQuery.data]);
-
+  }, [receiversQuery.data, sendersQuery.data, topologyQuery.data]);
   if (topologyQuery.isLoading) {
     return <LoadingPanel />;
   }
@@ -47,9 +56,31 @@ export function DashboardPage() {
     .filter((receiver) => receiver.active.senderId)
     .map((receiver) => {
       const activeSenderId = receiver.active.senderId;
-      const activeSenderLabel = activeSenderId ? resourceLabelsById.get(activeSenderId) ?? activeSenderId : "Unknown sender";
+      const activeSenderLabel = activeSenderId
+        ? resourceLabelsById.get(activeSenderId.toLowerCase()) ?? activeSenderId
+        : "Unknown sender";
       return `${receiver.label} <- ${activeSenderLabel}`;
     });
+  const filteredHistoryEntries = (auditQuery.data ?? []).filter((entry) => {
+    const fromUtc = historyFrom ? new Date(historyFrom) : null;
+    const toUtc = historyTo ? new Date(historyTo) : null;
+    const term = historySearch.trim().toLowerCase();
+    const occurredAt = new Date(entry.occurredAtUtc);
+
+    if (fromUtc && occurredAt < fromUtc) {
+      return false;
+    }
+    if (toUtc && occurredAt > toUtc) {
+      return false;
+    }
+
+    if (!term) {
+      return true;
+    }
+
+    const summary = formatAuditSummary(entry.summary, resourceLabelsById).toLowerCase();
+    return summary.includes(term);
+  });
 
   return (
     <div className="stack-xl">
@@ -70,36 +101,40 @@ export function DashboardPage() {
         />
       </div>
 
-      <Card title="Recent Audit" subtitle="Latest controller actions and validations.">
-        <div className="stack audit-terminal">
-          {auditQuery.data?.map((entry) => (
-            <div key={entry.id} className="audit-line">
-              <time className="audit-ts">{new Date(entry.occurredAtUtc).toLocaleString()}</time>
-              <span className="audit-prompt">$</span>
-              <strong className="audit-summary">{formatAuditSummary(entry.summary, resourceLabelsById)}</strong>
-              <span className="audit-actor">{resolveAuditLabel(entry.resourceId, entry.actor, resourceLabelsById)}</span>
-            </div>
-          ))}
-          <Link className="text-link" to="/audit">
-            Open full audit log
-          </Link>
+      <Card title="History" subtitle="Latest controller actions and validations.">
+        <div className="history-panel">
+          <div className="history-toolbar">
+            <SearchInput value={historySearch} onChange={setHistorySearch} placeholder="Search history" />
+            <label className="form-field">
+              <span>From</span>
+              <input type="datetime-local" value={historyFrom} onChange={(event) => setHistoryFrom(event.target.value)} />
+            </label>
+            <label className="form-field">
+              <span>To</span>
+              <input type="datetime-local" value={historyTo} onChange={(event) => setHistoryTo(event.target.value)} />
+            </label>
+          </div>
+          <div className="stack audit-terminal history-list">
+            {filteredHistoryEntries.map((entry) => (
+              <div key={entry.id} className="audit-line">
+                <time className="audit-ts">{new Date(entry.occurredAtUtc).toLocaleString()}</time>
+                <span className="audit-prompt">$</span>
+                <strong className="audit-summary">{formatAuditSummary(entry.summary, resourceLabelsById)}</strong>
+              </div>
+            ))}
+            <Link className="text-link" to="/audit">
+              Open full audit log
+            </Link>
+          </div>
         </div>
       </Card>
     </div>
   );
 }
 
-function resolveAuditLabel(resourceId: string | null, fallbackActor: string, labelsById: Map<string, string>): string {
-  if (!resourceId) {
-    return fallbackActor;
-  }
-
-  return labelsById.get(resourceId) ?? resourceId;
-}
-
 function formatAuditSummary(summary: string, labelsById: Map<string, string>): string {
   return summary.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, (id) => {
-    return labelsById.get(id) ?? id;
+    return labelsById.get(id.toLowerCase()) ?? id;
   });
 }
 

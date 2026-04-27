@@ -7,8 +7,7 @@ import { StatusBadge } from "./StatusBadge";
 const navItems = [
   { to: "/", label: "Dashboard" },
   { to: "/inventory", label: "Inventory" },
-  { to: "/senders", label: "Senders" },
-  { to: "/receivers", label: "Receivers" },
+  { to: "/senders-receivers", label: "Senders/Receivers" },
   { to: "/routing", label: "Routing" },
   { to: "/presets", label: "Presets" },
   { to: "/audit", label: "Audit" },

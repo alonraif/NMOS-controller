@@ -118,73 +118,77 @@ export function ConnectionDrawer({ open, receiver, senders, onClose }: Connectio
 
   return (
     <Drawer open={open} title={activeReceiver.label} onClose={onClose}>
-      <div className="stack">
-        <div className="inline-status">
-          <StatusBadge tone={activeReceiver.active.senderId ? "success" : "muted"}>
-            {activeReceiver.active.senderId ? "Connected" : "Disconnected"}
-          </StatusBadge>
-          <StatusBadge tone={activeReceiver.isConnectable ? "info" : "danger"}>
-            {activeReceiver.isConnectable ? "Connectable" : "Locked"}
-          </StatusBadge>
-        </div>
+      <div className="route-editor-layout">
+        <section className="detail-block stack">
+          <div className="inline-status">
+            <StatusBadge tone={activeReceiver.active.senderId ? "success" : "muted"}>
+              {activeReceiver.active.senderId ? "Connected" : "Disconnected"}
+            </StatusBadge>
+            <StatusBadge tone={activeReceiver.isConnectable ? "info" : "danger"}>
+              {activeReceiver.isConnectable ? "Connectable" : "Locked"}
+            </StatusBadge>
+          </div>
 
-        <label className="form-field">
-          <span>Operator</span>
-          <input value={operatorName} onChange={(event) => setOperatorName(event.target.value)} />
-        </label>
+          <label className="form-field">
+            <span>Operator</span>
+            <input value={operatorName} onChange={(event) => setOperatorName(event.target.value)} />
+          </label>
 
-        <label className="form-field">
-          <span>Activation</span>
-          <select
-            value={activationMode}
-            onChange={(event) => setActivationMode(event.target.value as ActivationModeType)}
-            disabled={isBusy}
-          >
-            <option value="Immediate">Immediate</option>
-            <option value="ScheduledAbsolute">Scheduled Absolute</option>
-            <option value="ScheduledRelative">Scheduled Relative</option>
-          </select>
-        </label>
+          <label className="form-field">
+            <span>Activation</span>
+            <select
+              value={activationMode}
+              onChange={(event) => setActivationMode(event.target.value as ActivationModeType)}
+              disabled={isBusy}
+            >
+              <option value="Immediate">Immediate</option>
+              <option value="ScheduledAbsolute">Scheduled Absolute</option>
+              <option value="ScheduledRelative">Scheduled Relative</option>
+            </select>
+          </label>
 
-        <label className="form-field">
-          <span>Sender</span>
-          <select value={selectedSenderId} onChange={(event) => setSelectedSenderId(event.target.value)} disabled={isBusy}>
-            <option value="">Select sender</option>
-            {compatibleSenders.map((sender) => (
-              <option key={sender.id} value={sender.id}>
-                {sender.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label className="form-field">
+            <span>Sender</span>
+            <select value={selectedSenderId} onChange={(event) => setSelectedSenderId(event.target.value)} disabled={isBusy}>
+              <option value="">Select sender</option>
+              {compatibleSenders.map((sender) => (
+                <option key={sender.id} value={sender.id}>
+                  {sender.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <div className="button-row">
-          <button className="ghost-button" type="button" onClick={() => void handleValidate()} disabled={isBusy}>
-            {validateMutation.isPending ? "Validating..." : "Validate"}
-          </button>
-          <button className="primary-button" type="button" onClick={() => void handleConnect()} disabled={isBusy}>
-            {connectMutation.isPending ? "Connecting..." : "Connect"}
-          </button>
-          <button className="danger-button" type="button" onClick={() => void handleDisconnect()} disabled={isBusy}>
-            {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
-          </button>
-        </div>
+          <div className="button-row">
+            <button className="ghost-button" type="button" onClick={() => void handleValidate()} disabled={isBusy}>
+              {validateMutation.isPending ? "Validating..." : "Validate"}
+            </button>
+            <button className="primary-button" type="button" onClick={() => void handleConnect()} disabled={isBusy}>
+              {connectMutation.isPending ? "Connecting..." : "Connect"}
+            </button>
+            <button className="danger-button" type="button" onClick={() => void handleDisconnect()} disabled={isBusy}>
+              {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
+            </button>
+          </div>
 
-        {validationMessage ? <div className="info-strip">{validationMessage}</div> : null}
-
-        <section className="detail-block">
-          <h4>Active State</h4>
-          <pre>{JSON.stringify(activeReceiver.active, null, 2)}</pre>
+          {validationMessage ? <div className="info-strip">{validationMessage}</div> : null}
         </section>
 
-        <section className="detail-block">
-          <h4>Staged State</h4>
-          <pre>{JSON.stringify(activeReceiver.staged, null, 2)}</pre>
-        </section>
+        <section className="route-editor-raw stack">
+          <section className="detail-block">
+            <h4>Active State</h4>
+            <pre>{JSON.stringify(activeReceiver.active, null, 2)}</pre>
+          </section>
 
-        <section className="detail-block">
-          <h4>Constraints</h4>
-          <pre>{JSON.stringify(activeReceiver.constraints, null, 2)}</pre>
+          <section className="detail-block">
+            <h4>Staged State</h4>
+            <pre>{JSON.stringify(activeReceiver.staged, null, 2)}</pre>
+          </section>
+
+          <section className="detail-block">
+            <h4>Constraints</h4>
+            <pre>{JSON.stringify(activeReceiver.constraints, null, 2)}</pre>
+          </section>
         </section>
       </div>
     </Drawer>

@@ -421,6 +421,33 @@ pre {
   gap: 16px;
 }
 
+.receiver-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.receiver-group + .receiver-group {
+  border-top: 1px solid rgba(123, 156, 201, 0.2);
+  padding-top: 18px;
+}
+
+.receiver-group-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.receiver-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resource-grid-receivers {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .resource-card {
   padding: 18px;
 }
@@ -497,6 +524,12 @@ textarea {
   color: white;
 }
 
+.danger-button:disabled {
+  background: linear-gradient(135deg, #4a5565, #5f6e83);
+  color: #c8d3e3;
+  cursor: not-allowed;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -520,6 +553,52 @@ textarea {
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.sender-receiver-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: min(980px, 100%);
+}
+
+.sender-receiver-search {
+  justify-self: end;
+  width: min(360px, 100%);
+}
+
+.sender-receiver-search .search-input {
+  width: 100%;
+}
+
+.sender-receiver-tabs {
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(123, 156, 201, 0.26);
+  background: rgba(10, 21, 34, 0.9);
+  justify-self: center;
+}
+
+.sender-receiver-tabs .ghost-button {
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(123, 156, 201, 0.26);
+  background: rgba(20, 35, 56, 0.9);
+  color: #cde0f6;
+}
+
+.sender-receiver-tabs .ghost-button.is-selected {
+  background: linear-gradient(135deg, #2f89ff, #2cba86);
+  border-color: rgba(148, 235, 206, 0.9);
+  color: #f6fbff;
+  box-shadow: 0 0 0 1px rgba(120, 223, 186, 0.35), 0 10px 24px rgba(6, 16, 29, 0.4);
 }
 
 .inventory-toolbar {
@@ -1105,6 +1184,25 @@ textarea {
   gap: 10px;
 }
 
+.history-panel {
+  display: grid;
+  gap: 12px;
+  min-height: 420px;
+}
+
+.history-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) repeat(2, minmax(200px, 240px));
+  gap: 10px;
+  align-items: end;
+}
+
+.history-list {
+  max-height: 340px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
 .audit-line {
   display: flex;
   align-items: baseline;
@@ -1165,19 +1263,29 @@ textarea {
   inset: 0;
   background: rgba(2, 6, 12, 0.72);
   display: flex;
-  justify-content: flex-end;
-  padding: 18px;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
   z-index: 20;
 }
 
 .drawer {
-  width: min(520px, 100%);
-  height: 100%;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
   overflow: auto;
   padding: 22px;
   border-radius: 24px;
   background: rgba(7, 14, 24, 0.98);
   border: 1px solid rgba(123, 156, 201, 0.16);
+}
+
+.button-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
 .detail-block {
@@ -1189,6 +1297,17 @@ textarea {
 
 .detail-block h4 {
   margin-top: 0;
+}
+
+.route-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.route-editor-raw {
+  min-width: 0;
 }
 
 .info-strip {
@@ -1271,10 +1390,34 @@ textarea {
   }
 }
 
+@media (max-width: 1800px) {
+  .resource-grid-receivers {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1500px) {
+  .resource-grid-receivers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 800px) {
   .two-column,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .route-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .history-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-grid-receivers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .topbar,
@@ -1319,5 +1462,11 @@ textarea {
 
   .registry-panel {
     width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .resource-grid-receivers {
+    grid-template-columns: 1fr;
   }
 }
