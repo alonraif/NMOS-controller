@@ -60,6 +60,18 @@ internal sealed class NmosDeviceResourceDto
 
     [JsonPropertyName("tags")]
     public Dictionary<string, string[]>? Tags { get; set; }
+
+    [JsonPropertyName("controls")]
+    public List<NmosDeviceControlDto>? Controls { get; set; }
+}
+
+internal sealed class NmosDeviceControlDto
+{
+    [JsonPropertyName("href")]
+    public string? Href { get; set; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
 }
 
 internal sealed class NmosSourceResourceDto
@@ -144,6 +156,9 @@ internal sealed class NmosSenderResourceDto
 
     [JsonPropertyName("subscription")]
     public NmosSenderSubscriptionDto? Subscription { get; set; }
+
+    [JsonPropertyName("tags")]
+    public Dictionary<string, string[]>? Tags { get; set; }
 }
 
 internal sealed class NmosSenderSubscriptionDto
@@ -174,6 +189,9 @@ internal sealed class NmosReceiverResourceDto
 
     [JsonPropertyName("caps")]
     public NmosReceiverCapsDto? Caps { get; set; }
+
+    [JsonPropertyName("tags")]
+    public Dictionary<string, string[]>? Tags { get; set; }
 }
 
 internal sealed class NmosReceiverCapsDto

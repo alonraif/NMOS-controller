@@ -17,6 +17,7 @@ public sealed class NmosReceiver
     public ConnectionState Staged { get; init; } = new(null, null, new Dictionary<string, string>(), null);
     public bool IsConnectable { get; init; } = true;
     public IReadOnlyCollection<string> InterfaceBindings { get; init; } = Array.Empty<string>();
+    public string? ConnectionApiBaseUrl { get; init; }
     public DateTimeOffset LastSeenAtUtc { get; init; } = DateTimeOffset.UtcNow;
 
     public bool IsConnected => !string.IsNullOrWhiteSpace(Active.SenderId);

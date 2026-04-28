@@ -17,4 +17,5 @@ public sealed record NmosReceiverDto(
     string SignalType,
     string RoutingDestinationId,
     string RoutingDestinationLabel,
-    DateTimeOffset LastSeenAtUtc);
+    DateTimeOffset LastSeenAtUtc,
+    string? ConnectionApiBaseUrl = null);

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useRegistry, useUpdateRegistry } from "../api/hooks";
-import type { ControllerMode } from "../api/types";
 import { Card } from "../components/Card";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { LoadingPanel } from "../components/LoadingPanel";
@@ -12,9 +11,10 @@ export function SettingsPage() {
 
   const [name, setName] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
+  const [connectionBaseUrl, setConnectionBaseUrl] = useState("");
+  const [connectionBaseUrls, setConnectionBaseUrls] = useState("");
   const [queryApiVersion, setQueryApiVersion] = useState("v1.3");
   const [connectionApiVersion, setConnectionApiVersion] = useState("v1.1");
-  const [mode, setMode] = useState<ControllerMode>("Mock");
   const [isEnabled, setIsEnabled] = useState(true);
 
   useEffect(() => {
@@ -24,9 +24,10 @@ export function SettingsPage() {
 
     setName(registryQuery.data.name);
     setBaseUrl(registryQuery.data.baseUrl);
+    setConnectionBaseUrl(registryQuery.data.connectionBaseUrl ?? "");
+    setConnectionBaseUrls(registryQuery.data.connectionBaseUrls ?? "");
     setQueryApiVersion(registryQuery.data.queryApiVersion);
     setConnectionApiVersion(registryQuery.data.connectionApiVersion);
-    setMode(registryQuery.data.mode);
     setIsEnabled(registryQuery.data.isEnabled);
   }, [registryQuery.data]);
 
@@ -43,16 +44,17 @@ export function SettingsPage() {
     await updateRegistry.mutateAsync({
       name,
       baseUrl,
+      connectionBaseUrl: connectionBaseUrl.trim() || null,
+      connectionBaseUrls: connectionBaseUrls.trim() || null,
       queryApiVersion,
       connectionApiVersion,
-      mode,
       isEnabled,
     });
   }
 
   return (
     <div className="stack-xl">
-      <PageHeader title="Settings" subtitle="Edit controller-owned registry settings and switch between live and mock mode." />
+      <PageHeader title="Settings" subtitle="Edit controller-owned live registry settings." />
       <Card title="Registry Configuration" subtitle="The frontend never talks directly to NMOS endpoints.">
         <form className="settings-form" onSubmit={(event) => void handleSubmit(event)}>
           <label className="form-field">
@@ -62,6 +64,14 @@ export function SettingsPage() {
           <label className="form-field">
             <span>Base URL</span>
             <input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} />
+          </label>
+          <label className="form-field">
+            <span>Connection Base URL (optional)</span>
+            <input value={connectionBaseUrl} onChange={(event) => setConnectionBaseUrl(event.target.value)} />
+          </label>
+          <label className="form-field">
+            <span>Connection Base URLs (optional CSV)</span>
+            <input value={connectionBaseUrls} onChange={(event) => setConnectionBaseUrls(event.target.value)} />
           </label>
           <div className="form-grid">
             <label className="form-field">
@@ -73,19 +83,10 @@ export function SettingsPage() {
               <input value={connectionApiVersion} onChange={(event) => setConnectionApiVersion(event.target.value)} />
             </label>
           </div>
-          <div className="form-grid">
-            <label className="form-field">
-              <span>Mode</span>
-              <select value={mode} onChange={(event) => setMode(event.target.value as ControllerMode)}>
-                <option value="Mock">Mock</option>
-                <option value="Live">Live</option>
-              </select>
-            </label>
-            <label className="checkbox-field">
-              <input type="checkbox" checked={isEnabled} onChange={(event) => setIsEnabled(event.target.checked)} />
-              <span>Registry Enabled</span>
-            </label>
-          </div>
+          <label className="checkbox-field">
+            <input type="checkbox" checked={isEnabled} onChange={(event) => setIsEnabled(event.target.checked)} />
+            <span>Registry Enabled</span>
+          </label>
           <button className="primary-button" type="submit">
             Save Settings
           </button>

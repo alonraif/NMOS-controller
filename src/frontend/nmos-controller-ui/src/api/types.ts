@@ -1,4 +1,3 @@
-export type ControllerMode = "Live" | "Mock";
 export type CompatibilityStatus = "Compatible" | "Warning" | "Incompatible";
 export type ActivationModeType = "Immediate" | "ScheduledRelative" | "ScheduledAbsolute";
 export type ResourceKind =
@@ -21,12 +20,23 @@ export interface RegistrySummary {
   baseUrl: string;
   queryApiVersion: string;
   connectionApiVersion: string;
-  mode: ControllerMode;
   isEnabled: boolean;
 }
 
 export interface RegistrySettings extends RegistrySummary {
+  connectionBaseUrl: string | null;
+  connectionBaseUrls: string | null;
   updatedAtUtc: string;
+}
+
+export interface HostResourceSnapshot {
+  cpuTotalPercent: number;
+  cpuAvailablePercent: number;
+  cpuUsedByControllerPercent: number;
+  memoryTotalBytes: number;
+  memoryAvailableBytes: number;
+  memoryUsedByControllerBytes: number;
+  sampledAtUtc: string;
 }
 
 export interface MediaFormatSummary {
@@ -177,6 +187,7 @@ export interface TopologyGraph {
 export interface RoutingSource {
   id: string;
   label: string;
+  groupHint: string;
   layer: string;
   primarySenderId: string | null;
   secondarySenderId: string | null;
@@ -339,8 +350,9 @@ export interface ExecutePresetPayload {
 export interface UpdateRegistryPayload {
   name: string;
   baseUrl: string;
+  connectionBaseUrl?: string | null;
+  connectionBaseUrls?: string | null;
   queryApiVersion: string;
   connectionApiVersion: string;
-  mode: ControllerMode;
   isEnabled: boolean;
 }

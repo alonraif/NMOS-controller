@@ -21,10 +21,4 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Serilog.AspNetCore" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Nmos\Mock\Fixtures\**\*.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>

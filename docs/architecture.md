@@ -2,12 +2,15 @@
 
 ## Objective
 
-NmosController is a controller-only platform for NMOS-managed broadcast IP environments. It integrates with external NMOS registries and device connection APIs to provide discovery, normalized topology, validation, routing control, presets, auditability, and mock lab simulation.
+NmosController is a controller-only platform for NMOS-managed broadcast IP environments. It integrates with NMOS registries and device connection APIs to provide discovery, normalized topology, validation, routing control, presets, and auditability.
+
+In live deployments, the same physical or virtual server is expected to also host a real NMOS Registry service as a separate process or container. That registry service is outside this repository's application boundary, but it is part of the intended server role.
 
 The system boundary is explicit:
 
 - In scope: NMOS discovery, controller state modeling, validation, connection control, operator UI, presets, audit, observability, persistence of controller-owned data.
-- Out of scope: implementing an NMOS Registry, Node, Sender, Receiver, or media-plane transport behavior.
+- Out of scope for this repository: implementing an NMOS Registry, Node, Sender, Receiver, or media-plane transport behavior.
+- In scope for deployment: running a separate real NMOS Registry service on the controller server and configuring the controller to use it.
 
 ## Architecture Summary
 
@@ -40,7 +43,6 @@ The repository will use a modular monolith with clean architecture boundaries.
   - EF Core persistence
   - PostgreSQL implementation
   - outbound NMOS HTTP clients
-  - mock lab adapters
   - Serilog configuration support
   - repository implementations
   - mapping from NMOS DTOs to domain models
@@ -77,17 +79,14 @@ Live NMOS topology remains external truth and is refreshed from NMOS APIs.
 - `/health` and `/ready`
 - audit log stream for operator actions
 
-### Mock Lab Mode
-
-Mock mode replaces live NMOS integration with fixture-backed query and connection adapters while preserving the same application service interfaces. This keeps the backend and frontend behavior consistent between demo and live environments.
-
 ## Runtime Component Model
 
 ```text
 +---------------------------+        +---------------------------+
-| React Operator UI         |        | External NMOS Registry    |
+| React Operator UI         |        | Real NMOS Registry        |
 | nmos-controller-ui        |<------>| IS-04 Query API           |
-+-------------+-------------+        +---------------------------+
++-------------+-------------+        | Separate service on host  |
+              |                      +---------------------------+
               |
               v
 +-------------+-------------+        +---------------------------+
@@ -101,7 +100,7 @@ Mock mode replaces live NMOS integration with fixture-backed query and connectio
 +-----+------+   +-----+----------------+
 | Application |   | Infrastructure      |
 | Use Cases   |   | EF Core + NMOS      |
-+-----+------+   | Clients + Mock Adpt. |
++-----+------+   | Clients              |
       |          +-----+----------------+
       v                |
 +-----+----------------+-----+
@@ -154,8 +153,7 @@ Mock mode replaces live NMOS integration with fixture-backed query and connectio
 |   |   |   |-- Nmos
 |   |   |   |   |-- Dtos
 |   |   |   |   |-- Clients
-|   |   |   |   |-- Mapping
-|   |   |   |   `-- Mock
+|   |   |   |   `-- Mapping
 |   |   |   |-- Observability
 |   |   |   `-- Configuration
 |   |   `-- NmosController.Contracts
@@ -185,9 +183,6 @@ Mock mode replaces live NMOS integration with fixture-backed query and connectio
 |   |   `-- Dockerfile
 |   |-- frontend
 |   |   `-- Dockerfile
-|   `-- mock-nmos
-|       |-- fixtures
-|       `-- Dockerfile
 |-- docs
 |   |-- architecture.md
 |   |-- api.md
@@ -212,7 +207,7 @@ The database will not be treated as authoritative for live topology. That avoids
 
 ### 3. Dedicated NMOS integration layer
 
-IS-04 and IS-05 payloads are verbose and versioned. Keeping raw DTOs and HTTP clients isolated in infrastructure prevents NMOS schema details from leaking into the domain model and makes version-aware handling and mock replacement straightforward.
+IS-04 and IS-05 payloads are verbose and versioned. Keeping raw DTOs and HTTP clients isolated in infrastructure prevents NMOS schema details from leaking into the domain model and makes version-aware handling straightforward.
 
 ### 4. Normalized internal topology model
 
@@ -226,19 +221,15 @@ Connection operations will run through a validation service that checks transpor
 
 The first UI will expose immediate activation, but the domain and API contracts will include activation models that can carry scheduled activations later. This avoids repainting the core connection flow when deferred activation is added.
 
-### 7. Mock lab mode behind the same interfaces
-
-A fixture-backed mock integration allows the full stack to run without external NMOS systems. Using the same application interfaces for live and mock mode keeps the code path realistic and makes integration tests and demos reliable.
-
-### 8. Operator API instead of direct frontend-to-NMOS access
+### 7. Operator API instead of direct frontend-to-NMOS access
 
 The frontend will call only the controller API. This centralizes validation, audit logging, retry logic, credential handling, and future authorization. It also prevents browser-origin issues and raw NMOS payload complexity from leaking into the UI.
 
-### 9. PostgreSQL as primary persistence store
+### 8. PostgreSQL as primary persistence store
 
 PostgreSQL is sufficient for controller-owned relational data and works well with EF Core, Docker, and Ubuntu deployment. Redis is intentionally deferred unless event fan-out, distributed locking, or cache pressure becomes a demonstrated need.
 
-### 10. Observability from the first implementation
+### 9. Observability from the first implementation
 
 Broadcast control tooling needs diagnosability during interoperability issues. Structured logs, correlation IDs, outbound request logging, health/readiness probes, metrics, and auditable user actions will be built in from the beginning rather than bolted on later.
 

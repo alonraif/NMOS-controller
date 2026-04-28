@@ -3,6 +3,7 @@ namespace NmosController.Application.Routing;
 public sealed record RoutingSourceDto(
     string Id,
     string Label,
+    string GroupHint,
     string Layer,
     string? PrimarySenderId,
     string? SecondarySenderId,

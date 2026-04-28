@@ -4,6 +4,7 @@ import type {
   ConnectReceiverPayload,
   DisconnectReceiverPayload,
   ExecutePresetPayload,
+  HostResourceSnapshot,
   NmosReceiver,
   NmosSender,
   PresetSalvo,
@@ -20,34 +21,57 @@ import type {
   UpsertPresetPayload,
 } from "./types";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "http://localhost:8080";
-const API_ROOT = `${API_BASE_URL}/api/v1`;
+const API_ROOT = "/api/v1";
+const REQUEST_TIMEOUT_MS = 12_000;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_ROOT}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    ...init,
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_ROOT}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds.`);
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+
+  const rawBody = await response.text();
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
-    try {
-      const problem = (await response.json()) as { detail?: string; title?: string };
-      message = problem.detail ?? problem.title ?? message;
-    } catch {
-      const text = await response.text();
-      if (text) {
-        message = text;
+    if (rawBody) {
+      try {
+        const problem = JSON.parse(rawBody) as { detail?: string; title?: string };
+        message = problem.detail ?? problem.title ?? message;
+      } catch {
+        message = rawBody;
       }
     }
 
     throw new Error(message);
   }
 
-  return (await response.json()) as T;
+  if (!rawBody) {
+    throw new Error("Request failed: empty response body.");
+  }
+
+  try {
+    return JSON.parse(rawBody) as T;
+  } catch {
+    throw new Error("Request failed: invalid JSON response body.");
+  }
 }
 
 function unwrap<T>(envelope: ApiEnvelope<T>): T {
@@ -72,6 +96,9 @@ export const api = {
   },
   async getRegistry() {
     return unwrap(await request<ApiEnvelope<RegistrySettings>>(`/registry`));
+  },
+  async getHostResources() {
+    return unwrap(await request<ApiEnvelope<HostResourceSnapshot>>(`/system/host`));
   },
   async updateRegistry(payload: UpdateRegistryPayload) {
     return unwrap(

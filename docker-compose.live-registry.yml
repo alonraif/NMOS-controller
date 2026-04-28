@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  real-nmos-registry:
+    image: ${NMOS_REGISTRY_IMAGE:-rhastie/nmos-cpp:latest}
+    container_name: nmos-controller-real-registry
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    environment:
+      RUN_NODE: "FALSE"
+    volumes:
+      - ./docker/real-nmos-registry/registry.json:/home/registry.json:ro
+

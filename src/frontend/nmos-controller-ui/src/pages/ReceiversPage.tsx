@@ -7,11 +7,10 @@ import { PageHeader } from "../components/PageHeader";
 import { SearchInput } from "../components/SearchInput";
 import { StatusBadge } from "../components/StatusBadge";
 import { ConnectionDrawer } from "../features/routing/ConnectionDrawer";
-import type { NmosReceiver } from "../api/types";
 
 export function ReceiversPage() {
   const [search, setSearch] = useState("");
-  const [selectedReceiver, setSelectedReceiver] = useState<NmosReceiver | null>(null);
+  const [selectedReceiverId, setSelectedReceiverId] = useState<string | null>(null);
   const receiversQuery = useReceivers();
   const sendersQuery = useSenders();
 
@@ -24,6 +23,11 @@ export function ReceiversPage() {
       })
       .sort((left, right) => left.label.localeCompare(right.label));
   }, [receiversQuery.data, search]);
+
+  const selectedReceiver = useMemo(
+    () => (selectedReceiverId ? (receiversQuery.data ?? []).find((receiver) => receiver.id === selectedReceiverId) ?? null : null),
+    [receiversQuery.data, selectedReceiverId],
+  );
 
   if (receiversQuery.isLoading || sendersQuery.isLoading) {
     return <LoadingPanel />;
@@ -68,7 +72,7 @@ export function ReceiversPage() {
               </div>
               <p className="muted-copy">Active Sender: {receiver.active.senderId ?? "None"}</p>
               <p className="muted-copy">Staged Sender: {receiver.staged.senderId ?? "None"}</p>
-              <button className="primary-button" type="button" onClick={() => setSelectedReceiver(receiver)}>
+              <button className="primary-button" type="button" onClick={() => setSelectedReceiverId(receiver.id)}>
                 Open Route Editor
               </button>
             </article>
@@ -79,7 +83,7 @@ export function ReceiversPage() {
         open={Boolean(selectedReceiver)}
         receiver={selectedReceiver}
         senders={sendersQuery.data ?? []}
-        onClose={() => setSelectedReceiver(null)}
+        onClose={() => setSelectedReceiverId(null)}
       />
     </div>
   );

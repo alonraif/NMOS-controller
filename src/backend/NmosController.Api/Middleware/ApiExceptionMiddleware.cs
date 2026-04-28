@@ -11,6 +11,14 @@ public sealed class ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExce
         {
             await next(context);
         }
+        catch (TimeoutException ex)
+        {
+            await WriteProblemAsync(context, ex, HttpStatusCode.GatewayTimeout, logger);
+        }
+        catch (HttpRequestException ex)
+        {
+            await WriteProblemAsync(context, ex, HttpStatusCode.BadGateway, logger);
+        }
         catch (InvalidOperationException ex)
         {
             await WriteProblemAsync(context, ex, HttpStatusCode.BadRequest, logger);
@@ -27,7 +35,13 @@ public sealed class ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExce
 
         var problem = new ProblemDetails
         {
-            Title = statusCode == HttpStatusCode.InternalServerError ? "Unhandled server error" : "Request failed",
+            Title = statusCode switch
+            {
+                HttpStatusCode.BadGateway => "Downstream request failed",
+                HttpStatusCode.GatewayTimeout => "Downstream request timed out",
+                HttpStatusCode.InternalServerError => "Unhandled server error",
+                _ => "Request failed"
+            },
             Detail = exception.Message,
             Status = (int)statusCode,
             Instance = context.Request.Path

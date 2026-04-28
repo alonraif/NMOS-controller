@@ -1,6 +1,9 @@
+using System.Net;
+using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 using NmosController.Application.Abstractions.Integrations;
 using NmosController.Application.Abstractions.Services;
+using NmosController.Application.Audit;
 using NmosController.Application.Topology;
 using NmosController.Domain.Enums;
 
@@ -9,10 +12,12 @@ namespace NmosController.Application.Services;
 public sealed class TopologyService(
     INmosQueryClient queryClient,
     TopologyBuilderService topologyBuilder,
-    IMemoryCache memoryCache) : ITopologyService
+    IMemoryCache memoryCache,
+    IAuditService auditService) : ITopologyService
 {
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(5);
     private const string CacheKey = "topology.snapshot";
+    private const string RegistryConnectivityKey = "topology.registry.connectivity";
 
     public async Task<TopologyGraphDto> GetTopologyAsync(bool forceRefresh, CancellationToken cancellationToken)
     {
@@ -75,6 +80,8 @@ public sealed class TopologyService(
         return null;
     }
 
+    public void InvalidateSnapshot() => memoryCache.Remove(CacheKey);
+
     private async Task<TopologySnapshotDto> GetSnapshotAsync(bool forceRefresh, CancellationToken cancellationToken)
     {
         if (!forceRefresh && memoryCache.TryGetValue<TopologySnapshotDto>(CacheKey, out var cached) && cached is not null)
@@ -82,8 +89,106 @@ public sealed class TopologyService(
             return cached;
         }
 
-        var snapshot = await queryClient.GetTopologySnapshotAsync(cancellationToken);
-        memoryCache.Set(CacheKey, snapshot, CacheLifetime);
-        return snapshot;
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.TopologyRefreshStarted,
+                "system",
+                "Topology refresh started.",
+                null,
+                "Topology",
+                null,
+                JsonSerializer.Serialize(new { forceRefresh })),
+            cancellationToken);
+
+        try
+        {
+            var snapshot = await queryClient.GetTopologySnapshotAsync(cancellationToken);
+            memoryCache.Set(CacheKey, snapshot, CacheLifetime);
+            await RecordConnectivityTransitionAsync(true, cancellationToken);
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.TopologyRefreshed,
+                    "system",
+                    "Topology refresh completed.",
+                    null,
+                    "Topology",
+                    null,
+                    JsonSerializer.Serialize(new
+                    {
+                        snapshot.RetrievedAtUtc,
+                        Nodes = snapshot.Nodes.Count,
+                        Devices = snapshot.Devices.Count,
+                        Senders = snapshot.Senders.Count,
+                        Receivers = snapshot.Receivers.Count
+                    })),
+                cancellationToken);
+            return snapshot;
+        }
+        catch (Exception ex)
+        {
+            await RecordConnectivityTransitionAsync(false, cancellationToken);
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.TopologyRefreshFailed,
+                    "system",
+                    "Topology refresh failed.",
+                    null,
+                    "Topology",
+                    null,
+                    JsonSerializer.Serialize(new { ex.Message })),
+                cancellationToken);
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.ApiRequestFailed,
+                    "system",
+                    "Controller-side API request failed while refreshing topology.",
+                    null,
+                    "ApiRequest",
+                    null,
+                    JsonSerializer.Serialize(new
+                    {
+                        Endpoint = "NMOS Query/Connection APIs",
+                        StatusCode = TryResolveStatusCode(ex),
+                        ex.Message
+                    })),
+                cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task RecordConnectivityTransitionAsync(bool isOnline, CancellationToken cancellationToken)
+    {
+        var hadPrevious = memoryCache.TryGetValue<bool>(RegistryConnectivityKey, out var previous);
+        memoryCache.Set(RegistryConnectivityKey, isOnline, TimeSpan.FromHours(1));
+        if (hadPrevious && previous == isOnline)
+        {
+            return;
+        }
+
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RegistryConnectivityChanged,
+                "system",
+                $"Registry connectivity changed to {(isOnline ? "online" : "offline")}.",
+                null,
+                "Registry",
+                null,
+                JsonSerializer.Serialize(new { IsOnline = isOnline })),
+            cancellationToken);
+    }
+
+    private static int? TryResolveStatusCode(Exception ex)
+    {
+        if (ex is HttpRequestException requestException && requestException.StatusCode.HasValue)
+        {
+            return (int)requestException.StatusCode.Value;
+        }
+
+        if (ex is WebException webException && webException.Response is HttpWebResponse webResponse)
+        {
+            return (int)webResponse.StatusCode;
+        }
+
+        return null;
     }
 }

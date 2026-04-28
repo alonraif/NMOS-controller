@@ -1,0 +1,11 @@
+{
+  "pri": 99,
+  "logging_level": -20,
+  "http_trace": false,
+  "allow_invalid_resources": false,
+  "label": "nmos-controller-registry",
+  "http_port": 8081,
+  "query_ws_port": 8082,
+  "registration_expiry_interval": 12
+}
+

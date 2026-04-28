@@ -8,4 +8,5 @@ public interface ITopologyService
     Task<IReadOnlyCollection<NmosSenderDto>> GetSendersAsync(bool forceRefresh, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<NmosReceiverDto>> GetReceiversAsync(bool forceRefresh, CancellationToken cancellationToken);
     Task<ResourceDetailDto?> GetResourceAsync(string resourceId, CancellationToken cancellationToken);
+    void InvalidateSnapshot();
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -46,16 +47,23 @@ internal sealed class DatabaseInitializationHostedService(
 
     private static async Task SeedAsync(ControllerDbContext dbContext, NmosControllerOptions options, CancellationToken cancellationToken)
     {
-        if (!await dbContext.Registries.AnyAsync(cancellationToken))
+        await EnsureSchemaFixupsAsync(dbContext, cancellationToken);
+
+        var existingRegistry = await dbContext.Registries
+            .OrderBy(entity => entity.UpdatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existingRegistry is null)
         {
             dbContext.Registries.Add(new RegistryConfigurationEntity
             {
                 Id = Guid.NewGuid(),
                 Name = options.Registry.Name,
                 BaseUrl = options.Registry.BaseUrl,
+                ConnectionBaseUrl = options.Registry.ConnectionBaseUrl,
+                ConnectionBaseUrls = options.Registry.ConnectionBaseUrls,
                 QueryApiVersion = options.Registry.QueryApiVersion,
                 ConnectionApiVersion = options.Registry.ConnectionApiVersion,
-                Mode = options.Mode,
                 IsEnabled = options.Registry.IsEnabled,
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             });
@@ -75,7 +83,7 @@ internal sealed class DatabaseInitializationHostedService(
             {
                 Id = Guid.NewGuid(),
                 Name = "Demo Audio Route",
-                Description = "Connect Program Audio to the Audio Room destination in mock lab mode.",
+                Description = "Connect Program Audio to the Audio Room destination.",
                 RoutesJson = JsonSerializer.Serialize(demoRoutes, NmosJsonSerializer.Default),
                 CreatedAtUtc = DateTimeOffset.UtcNow,
                 UpdatedAtUtc = DateTimeOffset.UtcNow
@@ -96,5 +104,23 @@ internal sealed class DatabaseInitializationHostedService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task EnsureSchemaFixupsAsync(ControllerDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var database = dbContext.Database;
+        if (!database.IsNpgsql())
+        {
+            return;
+        }
+
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"ConnectionBaseUrl\" character varying(1024);",
+            [],
+            cancellationToken);
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"ConnectionBaseUrls\" character varying(4096);",
+            [],
+            cancellationToken);
     }
 }

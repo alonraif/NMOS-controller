@@ -10,7 +10,6 @@ using NmosController.Application.Presets;
 using NmosController.Application.Routing;
 using NmosController.Application.Settings;
 using NmosController.Application.Topology;
-using NmosController.Domain.Enums;
 using NmosController.Domain.ValueObjects;
 
 namespace NmosController.Api.IntegrationTests;
@@ -41,7 +40,7 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
         public Task<TopologyGraphDto> GetTopologyAsync(bool forceRefresh, CancellationToken cancellationToken) =>
             Task.FromResult(
                 new TopologyGraphDto(
-                    new RegistrySummaryDto(Guid.Empty, "Mock Registry", "http://mock", "v1.3", "v1.1", ControllerMode.Mock, true),
+                    new RegistrySummaryDto(Guid.Empty, "Live Registry", "http://mock", "v1.3", "v1.1", true),
                     Array.Empty<NmosNodeDto>(),
                     Array.Empty<NmosDeviceDto>(),
                     Array.Empty<NmosSourceDto>(),
@@ -95,17 +94,21 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
 
         public Task<ResourceDetailDto?> GetResourceAsync(string resourceId, CancellationToken cancellationToken) =>
             Task.FromResult<ResourceDetailDto?>(null);
+
+        public void InvalidateSnapshot()
+        {
+        }
     }
 
     private sealed class FakeRegistryService : IRegistryService
     {
         public Task<RegistrySettingsDto?> GetAsync(CancellationToken cancellationToken) =>
             Task.FromResult<RegistrySettingsDto?>(
-                new RegistrySettingsDto(Guid.Empty, "Mock Registry", "http://mock", "v1.3", "v1.1", ControllerMode.Mock, true, DateTimeOffset.UtcNow));
+                new RegistrySettingsDto(Guid.Empty, "Live Registry", "http://mock", null, null, "v1.3", "v1.1", true, DateTimeOffset.UtcNow));
 
         public Task<RegistrySettingsDto> SaveAsync(UpdateRegistrySettingsCommand command, CancellationToken cancellationToken) =>
             Task.FromResult(
-                new RegistrySettingsDto(Guid.Empty, command.Name, command.BaseUrl, command.QueryApiVersion, command.ConnectionApiVersion, command.Mode, command.IsEnabled, DateTimeOffset.UtcNow));
+                new RegistrySettingsDto(Guid.Empty, command.Name, command.BaseUrl, command.ConnectionBaseUrl, command.ConnectionBaseUrls, command.QueryApiVersion, command.ConnectionApiVersion, command.IsEnabled, DateTimeOffset.UtcNow));
     }
 
     private sealed class FakeRoutingService : IRoutingService

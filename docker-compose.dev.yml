@@ -1,0 +1,24 @@
+services:
+  frontend:
+    profiles: ["prod"]
+
+  frontend-dev:
+    image: node:20-alpine
+    container_name: nmos-controller-frontend-dev
+    restart: unless-stopped
+    network_mode: host
+    working_dir: /app
+    environment:
+      BACKEND_PROXY_BASE: http://127.0.0.1:${BACKEND_PORT:-8080}
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-false}
+    volumes:
+      - ./src/frontend/nmos-controller-ui:/app
+      - frontend-node-modules:/app/node_modules
+    command: >
+      sh -c "if [ ! -x node_modules/.bin/vite ]; then npm ci; fi && npm run dev"
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  frontend-node-modules:

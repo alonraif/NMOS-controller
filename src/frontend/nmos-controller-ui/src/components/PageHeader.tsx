@@ -10,7 +10,6 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="page-header">
       <div>
-        <p className="page-kicker">NMOS Controller</p>
         <h2>{title}</h2>
         <p className="page-subtitle">{subtitle}</p>
       </div>
