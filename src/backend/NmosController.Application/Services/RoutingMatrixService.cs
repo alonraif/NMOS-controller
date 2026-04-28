@@ -17,6 +17,7 @@ public sealed class RoutingMatrixService
                 return new RoutingSourceDto(
                     group.Key,
                     primary?.SourceGroupLabel ?? group.Key,
+                    primary?.SourceGroupLabel ?? group.Key,
                     primary?.SignalType ?? "Unknown",
                     primary?.Id,
                     secondary?.Id,

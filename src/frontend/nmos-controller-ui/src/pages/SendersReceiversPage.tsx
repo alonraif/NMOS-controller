@@ -230,7 +230,7 @@ export function SendersReceiversPage() {
   }
 
   return (
-    <div className="stack-xl">
+    <div className="stack-xl senders-receivers-page">
       <PageHeader
         title="Senders/Receivers"
         subtitle="Inspect senders and receivers in one workspace, and open route editing directly from receiver cards."
@@ -344,7 +344,7 @@ export function SendersReceiversPage() {
                         </div>
                         <div>
                           <button
-                            className="danger-button"
+                            className="danger-button disconnect-button"
                             type="button"
                             disabled={
                               !receiver.active.senderId ||

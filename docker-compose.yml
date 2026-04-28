@@ -21,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: docker/backend/Dockerfile
+      network: host
     container_name: nmos-controller-backend
     restart: unless-stopped
     network_mode: host

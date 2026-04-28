@@ -3,7 +3,6 @@ import { AppLayout } from "../components/AppLayout";
 import { AuditLogPage } from "../pages/AuditLogPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { InventoryPage } from "../pages/InventoryPage";
-import { PresetsPage } from "../pages/PresetsPage";
 import { RegistryStatusPage } from "../pages/RegistryStatusPage";
 import { ResourceDetailPage } from "../pages/ResourceDetailPage";
 import { RoutingPage } from "../pages/RoutingPage";
@@ -22,7 +21,6 @@ export function AppRouter() {
         <Route path="/receivers" element={<Navigate to="/senders-receivers" replace />} />
         <Route path="/routing" element={<RoutingPage />} />
         <Route path="/resources/:resourceId" element={<ResourceDetailPage />} />
-        <Route path="/presets" element={<PresetsPage />} />
         <Route path="/audit" element={<AuditLogPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>

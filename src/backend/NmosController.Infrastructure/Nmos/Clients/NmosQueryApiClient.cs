@@ -16,6 +16,7 @@ internal sealed class NmosQueryApiClient(
     INmosConnectionClient connectionClient,
     ILogger<NmosQueryApiClient> logger) : INmosQueryClient
 {
+    private const string GroupHintTagKey = "urn:x-nmos:tag:grouphint/v1.0";
     private static readonly TimeSpan ManifestRequestTimeout = TimeSpan.FromSeconds(3);
     private const int ManifestRequestAttempts = 2;
 
@@ -52,13 +53,22 @@ internal sealed class NmosQueryApiClient(
                 var flowDto = flow?.ToDto();
                 var transportFile = await TryFetchTransportFileAsync(sender.ManifestHref, cancellationToken);
 
+                var sourceGroupHint = ResolveGroupHint(
+                    sender.Tags,
+                    ResolveGroupHint(device?.Tags, device?.Label ?? sender.Label));
+                var normalizedSourceGroupId = NormalizeGroupHint(sourceGroupHint);
+                if (string.IsNullOrWhiteSpace(normalizedSourceGroupId))
+                {
+                    normalizedSourceGroupId = device?.Id ?? sender.Id;
+                }
+
                 return sender.ToDto(
                     device?.NodeId ?? string.Empty,
                     flowDto?.Format ?? new MediaFormatSummary(string.Empty, null, null, null, null, null),
                     transportFile,
                     InferSignalType(flowDto?.Format.Format),
-                    sender.Id,
-                    sender.Label,
+                    normalizedSourceGroupId,
+                    sourceGroupHint,
                     null,
                     "A",
                     true);
@@ -74,16 +84,55 @@ internal sealed class NmosQueryApiClient(
                     ?? registry.ConnectionBaseUrl.ToString();
                 var receiverState = await connectionClient.GetReceiverStateAsync(receiver.Id, effectiveConnectionBaseUrl, cancellationToken);
 
+                var destinationGroupHint = ResolveGroupHint(
+                    receiver.Tags,
+                    ResolveGroupHint(device?.Tags, device?.Label ?? receiver.Label));
+                var receiverIndex = TryExtractReceiverIndex(destinationGroupHint) ?? TryExtractReceiverIndex(receiver.Label);
+                var normalizedDestinationGroupId = NormalizeGroupHint(destinationGroupHint);
+                if (receiverIndex is not null)
+                {
+                    var deviceKey = device?.Id ?? receiver.DeviceId;
+                    normalizedDestinationGroupId = $"{deviceKey}:receiver-{receiverIndex.Value}";
+                    destinationGroupHint = $"Receiver {receiverIndex.Value}";
+                }
+                if (string.IsNullOrWhiteSpace(normalizedDestinationGroupId))
+                {
+                    normalizedDestinationGroupId = device?.Id ?? receiver.Id;
+                }
                 return receiver.ToDto(
                     device?.NodeId ?? string.Empty,
                     receiverState?.Constraints ?? ConstraintSet.Empty,
                     receiverState?.Active ?? new ConnectionState(null, null, new Dictionary<string, string>(), null),
                     receiverState?.Staged ?? new ConnectionState(null, null, new Dictionary<string, string>(), null),
                     InferSignalType(receiver.Format),
-                    receiver.Id,
-                    receiver.Label,
+                    normalizedDestinationGroupId,
+                    destinationGroupHint,
                     effectiveConnectionBaseUrl);
             }));
+
+        var routingDestinations = receiverDtos
+            .GroupBy(x => x.RoutingDestinationId, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var items = group.ToArray();
+                var first = items[0];
+                var tags = items
+                    .Select(x => x.RoutingDestinationLabel)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                return new RoutingDestinationSnapshotDto(
+                    first.RoutingDestinationId,
+                    first.RoutingDestinationLabel,
+                    first.NodeId,
+                    first.DeviceId,
+                    items.FirstOrDefault(x => string.Equals(x.SignalType, "Video", StringComparison.OrdinalIgnoreCase))?.Id,
+                    items.FirstOrDefault(x => string.Equals(x.SignalType, "Audio", StringComparison.OrdinalIgnoreCase))?.Id,
+                    items.FirstOrDefault(x => string.Equals(x.SignalType, "Ancillary", StringComparison.OrdinalIgnoreCase))?.Id,
+                    tags);
+            })
+            .ToArray();
 
         return new TopologySnapshotDto(
             new RegistrySummaryDto(
@@ -99,7 +148,7 @@ internal sealed class NmosQueryApiClient(
             flows.Select(x => x.ToDto()).ToArray(),
             senderDtos,
             receiverDtos,
-            receiverDtos.Select(x => new RoutingDestinationSnapshotDto(x.RoutingDestinationId, x.RoutingDestinationLabel, x.NodeId, x.DeviceId, x.SignalType == "Video" ? x.Id : null, x.SignalType == "Audio" ? x.Id : null, x.SignalType == "Ancillary" ? x.Id : null, Array.Empty<string>())).ToArray(),
+            routingDestinations,
             DateTimeOffset.UtcNow);
     }
 
@@ -111,6 +160,77 @@ internal sealed class NmosQueryApiClient(
             "urn:x-nmos:format:data" => "Ancillary",
             _ => "Unknown"
         };
+
+    private static string ResolveGroupHint(Dictionary<string, string[]>? tags, string fallbackLabel)
+    {
+        if (tags is null)
+        {
+            return fallbackLabel;
+        }
+
+        if (!tags.TryGetValue(GroupHintTagKey, out var hints) || hints is null || hints.Length == 0)
+        {
+            return fallbackLabel;
+        }
+
+        var groupHint = hints.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+        return string.IsNullOrWhiteSpace(groupHint) ? fallbackLabel : groupHint.Trim();
+    }
+
+    private static string NormalizeGroupHint(string value)
+    {
+        var receiverMatch = System.Text.RegularExpressions.Regex.Match(
+            value,
+            @"\bReceiver\s*(\d+)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (receiverMatch.Success)
+        {
+            return $"receiver-{receiverMatch.Groups[1].Value}";
+        }
+
+        var stem = value.Split(':', 2, StringSplitOptions.TrimEntries)[0];
+        var normalized = stem
+            .Replace("Video", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("Audio", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("Ancillary", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace(":", " ")
+            .Trim();
+
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return value;
+        }
+
+        return normalized.ToLowerInvariant();
+    }
+
+    private static int? TryExtractReceiverIndex(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var receiverMatch = System.Text.RegularExpressions.Regex.Match(
+            value,
+            @"\bReceiver\s*(\d+)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (receiverMatch.Success && int.TryParse(receiverMatch.Groups[1].Value, out var fromReceiverTag))
+        {
+            return fromReceiverTag;
+        }
+
+        var rxMatch = System.Text.RegularExpressions.Regex.Match(
+            value,
+            @"\bRx(?:Video|Audio|Anc(?:illary)?Data?)\s*(\d+)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (rxMatch.Success && int.TryParse(rxMatch.Groups[1].Value, out var fromRxLabel))
+        {
+            return fromRxLabel;
+        }
+
+        return null;
+    }
 
     private static IReadOnlyCollection<string> BuildCandidateConnectionBaseUrls(
         IReadOnlyCollection<NmosDeviceResourceDto> devices,

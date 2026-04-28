@@ -8,9 +8,8 @@ const navItems = [
   { to: "/", label: "Dashboard" },
   { to: "/inventory", label: "Inventory" },
   { to: "/senders-receivers", label: "Senders/Receivers" },
-  { to: "/routing", label: "Routing" },
-  { to: "/presets", label: "Presets" },
-  { to: "/audit", label: "Audit" },
+  { to: "/routing", label: "Soft Panel" },
+  { to: "/audit", label: "History" },
   { to: "/settings", label: "Settings" },
 ];
 
@@ -66,7 +65,7 @@ export function AppLayout() {
         <div className="brand-block">
           <p className="brand-kicker">LiveU Customer Success</p>
           <h1>NMOS Controller</h1>
-          <p className="brand-subtitle">ST 2110 routing, topology, validation, and presets.</p>
+          <p className="brand-subtitle">ST 2110 routing, topology, and validation.</p>
         </div>
         <nav className="nav">
           {navItems.map((item) => (
@@ -114,35 +113,37 @@ export function AppLayout() {
               )}
             </section>
           ) : null}
-          <div className="content-top-right-group">
-            <section className="sidebar-card registry-panel">
-              <div className="sidebar-label">Registry Server</div>
-              <div className="sidebar-row">
-                <strong>{registry?.name ?? "Unavailable"}</strong>
-                <StatusBadge tone={registryServerHealth.tone}>{registryServerHealth.label}</StatusBadge>
-              </div>
-              <small>{registry?.baseUrl ?? "No registry configured"}</small>
-              <small>{registryServerHealth.detail}</small>
-            </section>
-            <section className="sidebar-card registry-panel">
-              <div className="sidebar-label">Database</div>
-              <div className="sidebar-row">
-                <strong>PostgreSQL</strong>
-                <StatusBadge tone={databaseHealth.tone}>{databaseHealth.label}</StatusBadge>
-              </div>
-              <small>{databaseHealth.detail}</small>
-            </section>
-            <section className="sidebar-card registry-panel">
-              <div className="sidebar-label">Live Snapshot</div>
-              <strong>Topology</strong>
-              <div className="sidebar-metrics">
-                <span>{topology?.senders.length ?? "-"} senders</span>
-                <span>{topology?.receivers.length ?? "-"} receivers</span>
-                <span>{topology?.nodes.length ?? "-"} nodes</span>
-              </div>
-              <small>{snapshotHealth.detail}</small>
-            </section>
-          </div>
+          {isDashboardRoute ? (
+            <div className="content-top-right-group">
+              <section className="sidebar-card registry-panel">
+                <div className="sidebar-label">Registry Server</div>
+                <div className="sidebar-row">
+                  <strong>{registry?.name ?? "Unavailable"}</strong>
+                  <StatusBadge tone={registryServerHealth.tone}>{registryServerHealth.label}</StatusBadge>
+                </div>
+                <small>{registry?.baseUrl ?? "No registry configured"}</small>
+                <small>{registryServerHealth.detail}</small>
+              </section>
+              <section className="sidebar-card registry-panel">
+                <div className="sidebar-label">Database</div>
+                <div className="sidebar-row">
+                  <strong>PostgreSQL</strong>
+                  <StatusBadge tone={databaseHealth.tone}>{databaseHealth.label}</StatusBadge>
+                </div>
+                <small>{databaseHealth.detail}</small>
+              </section>
+              <section className="sidebar-card registry-panel">
+                <div className="sidebar-label">Live Snapshot</div>
+                <strong>Topology</strong>
+                <div className="sidebar-metrics">
+                  <span>{topology?.senders.length ?? "-"} senders</span>
+                  <span>{topology?.receivers.length ?? "-"} receivers</span>
+                  <span>{topology?.nodes.length ?? "-"} nodes</span>
+                </div>
+                <small>{snapshotHealth.detail}</small>
+              </section>
+            </div>
+          ) : null}
         </div>
         <main className="page-content">
           <Outlet />

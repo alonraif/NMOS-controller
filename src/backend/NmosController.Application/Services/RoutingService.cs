@@ -64,9 +64,21 @@ public sealed class RoutingService(
 
     public async Task<ServiceResult> ConnectAsync(RouteConnectCommand command, CancellationToken cancellationToken)
     {
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestStarted,
+                command.RequestedBy,
+                $"Route request started for receiver '{command.ReceiverId}'.",
+                command.ReceiverId,
+                nameof(ResourceKind.Receiver),
+                null,
+                JsonSerializer.Serialize(new { command.ReceiverId, command.SenderId, command.Activation.Mode })),
+            cancellationToken);
+
         var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
         var sender = topology.Senders.FirstOrDefault(x => x.Id == command.SenderId);
         var receiver = topology.Receivers.FirstOrDefault(x => x.Id == command.ReceiverId);
+        var previousSenderId = receiver?.Active.SenderId;
 
         var assessment = compatibilityEvaluator.Evaluate(
             sender?.ToDomain(),
@@ -86,6 +98,26 @@ public sealed class RoutingService(
 
         if (assessment.Status == CompatibilityStatus.Incompatible)
         {
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.ValidationFailedBlocking,
+                    "system",
+                    $"Blocking validation failure from sender '{command.SenderId}' to receiver '{command.ReceiverId}'.",
+                    command.ReceiverId,
+                    nameof(ResourceKind.Receiver),
+                    null,
+                    JsonSerializer.Serialize(new { command.SenderId, command.ReceiverId, assessment.Status })),
+                cancellationToken);
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.RouteRequestFailed,
+                    command.RequestedBy,
+                    $"Route request failed validation for receiver '{command.ReceiverId}'.",
+                    command.ReceiverId,
+                    nameof(ResourceKind.Receiver),
+                    null,
+                    JsonSerializer.Serialize(new { command.ReceiverId, command.SenderId, Reason = "ValidationFailed" })),
+                cancellationToken);
             return ServiceResult.Failure("Connection request failed validation.");
         }
 
@@ -104,14 +136,46 @@ public sealed class RoutingService(
                 null,
                 JsonSerializer.Serialize(new { command.SenderId, command.ReceiverId, command.Activation.Mode })),
             cancellationToken);
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.ReceiverStateChanged,
+                command.RequestedBy,
+                $"Receiver '{command.ReceiverId}' sender changed.",
+                command.ReceiverId,
+                nameof(ResourceKind.Receiver),
+                null,
+                JsonSerializer.Serialize(new { ReceiverId = command.ReceiverId, PreviousSenderId = previousSenderId, NewSenderId = command.SenderId })),
+            cancellationToken);
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestCompleted,
+                command.RequestedBy,
+                $"Route request completed for receiver '{command.ReceiverId}'.",
+                command.ReceiverId,
+                nameof(ResourceKind.Receiver),
+                null,
+                JsonSerializer.Serialize(new { command.ReceiverId, command.SenderId })),
+            cancellationToken);
 
         return ServiceResult.Success("Connection request submitted.");
     }
 
     public async Task<ServiceResult> DisconnectAsync(RouteDisconnectCommand command, CancellationToken cancellationToken)
     {
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestStarted,
+                command.RequestedBy,
+                $"Disconnect request started for receiver '{command.ReceiverId}'.",
+                command.ReceiverId,
+                nameof(ResourceKind.Receiver),
+                null,
+                JsonSerializer.Serialize(new { command.ReceiverId, command.Activation.Mode })),
+            cancellationToken);
+
         var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
         var receiver = topology.Receivers.FirstOrDefault(x => x.Id == command.ReceiverId);
+        var previousSenderId = receiver?.Active.SenderId;
 
         await connectionClient.ApplyConnectionAsync(
             new ConnectionRequest
@@ -136,12 +200,43 @@ public sealed class RoutingService(
                 null,
                 JsonSerializer.Serialize(new { command.ReceiverId, command.Activation.Mode })),
             cancellationToken);
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.ReceiverStateChanged,
+                command.RequestedBy,
+                $"Receiver '{command.ReceiverId}' sender changed.",
+                command.ReceiverId,
+                nameof(ResourceKind.Receiver),
+                null,
+                JsonSerializer.Serialize(new { ReceiverId = command.ReceiverId, PreviousSenderId = previousSenderId, NewSenderId = (string?)null })),
+            cancellationToken);
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestCompleted,
+                command.RequestedBy,
+                $"Disconnect request completed for receiver '{command.ReceiverId}'.",
+                command.ReceiverId,
+                nameof(ResourceKind.Receiver),
+                null,
+                JsonSerializer.Serialize(new { command.ReceiverId })),
+            cancellationToken);
 
         return ServiceResult.Success("Disconnect request submitted.");
     }
 
     public async Task<ServiceResult> ConnectAsync(RoutingConnectCommand command, CancellationToken cancellationToken)
     {
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestStarted,
+                command.RequestedBy,
+                $"Routing destination connect started for '{command.DestinationId}'.",
+                command.DestinationId,
+                "RoutingDestination",
+                null,
+                JsonSerializer.Serialize(new { command.DestinationId, command.VideoSourceId, command.AudioSourceId, command.AncillarySourceId })),
+            cancellationToken);
+
         var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
         var snapshot = new TopologySnapshotDto(
             topology.Registry,
@@ -185,6 +280,26 @@ public sealed class RoutingService(
 
             if (assessment.Status == CompatibilityStatus.Incompatible)
             {
+                await auditService.RecordAsync(
+                    new CreateAuditEntryCommand(
+                        AuditActionType.ValidationFailedBlocking,
+                        "system",
+                        $"Blocking validation failure for routing destination '{command.DestinationId}' ({operation.Layer}).",
+                        operation.ReceiverId!,
+                        nameof(ResourceKind.Receiver),
+                        null,
+                        JsonSerializer.Serialize(new { command.DestinationId, operation.Layer, SenderId = senderId, ReceiverId = operation.ReceiverId })),
+                    cancellationToken);
+                await auditService.RecordAsync(
+                    new CreateAuditEntryCommand(
+                        AuditActionType.RouteRequestFailed,
+                        command.RequestedBy,
+                        $"Routing destination connect failed validation for '{command.DestinationId}'.",
+                        command.DestinationId,
+                        "RoutingDestination",
+                        null,
+                        JsonSerializer.Serialize(new { command.DestinationId, operation.Layer, SenderId = senderId, ReceiverId = operation.ReceiverId })),
+                    cancellationToken);
                 return ServiceResult.Failure($"Routing request for {operation.Layer} failed validation.");
             }
 
@@ -192,6 +307,16 @@ public sealed class RoutingService(
                 CreateConnectRequest(operation.ReceiverId!, senderId, command.Activation, command.RequestedBy, sender, receiver),
                 cancellationToken);
             topologyService.InvalidateSnapshot();
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.ReceiverStateChanged,
+                    command.RequestedBy,
+                    $"Receiver '{operation.ReceiverId}' sender changed.",
+                    operation.ReceiverId!,
+                    nameof(ResourceKind.Receiver),
+                    null,
+                    JsonSerializer.Serialize(new { ReceiverId = operation.ReceiverId, PreviousSenderId = receiver?.Active.SenderId, NewSenderId = senderId, operation.Layer })),
+                cancellationToken);
         }
 
         await auditService.RecordAsync(
@@ -204,12 +329,33 @@ public sealed class RoutingService(
                 null,
                 JsonSerializer.Serialize(new { command.DestinationId, command.VideoSourceId, command.AudioSourceId, command.AncillarySourceId })),
             cancellationToken);
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestCompleted,
+                command.RequestedBy,
+                $"Routing destination connect completed for '{command.DestinationId}'.",
+                command.DestinationId,
+                "RoutingDestination",
+                null,
+                JsonSerializer.Serialize(new { command.DestinationId })),
+            cancellationToken);
 
         return ServiceResult.Success("Routing change submitted.");
     }
 
     public async Task<ServiceResult> DisconnectAsync(RoutingDisconnectCommand command, CancellationToken cancellationToken)
     {
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestStarted,
+                command.RequestedBy,
+                $"Routing destination disconnect started for '{command.DestinationId}'.",
+                command.DestinationId,
+                "RoutingDestination",
+                null,
+                JsonSerializer.Serialize(new { command.DestinationId, command.DisconnectVideo, command.DisconnectAudio, command.DisconnectAncillary })),
+            cancellationToken);
+
         var topology = await topologyService.GetTopologyAsync(true, cancellationToken);
         var snapshot = new TopologySnapshotDto(
             topology.Registry,
@@ -233,6 +379,7 @@ public sealed class RoutingService(
         foreach (var operation in operations.Where(x => x.Enabled && x.ReceiverId is not null))
         {
             var receiver = snapshot.Receivers.FirstOrDefault(x => x.Id == operation.ReceiverId);
+            var previousSenderId = receiver?.Active.SenderId;
             await connectionClient.ApplyConnectionAsync(
                 new ConnectionRequest
                 {
@@ -245,6 +392,16 @@ public sealed class RoutingService(
                 },
                 cancellationToken);
             topologyService.InvalidateSnapshot();
+            await auditService.RecordAsync(
+                new CreateAuditEntryCommand(
+                    AuditActionType.ReceiverStateChanged,
+                    command.RequestedBy,
+                    $"Receiver '{operation.ReceiverId}' sender changed.",
+                    operation.ReceiverId!,
+                    nameof(ResourceKind.Receiver),
+                    null,
+                    JsonSerializer.Serialize(new { ReceiverId = operation.ReceiverId, PreviousSenderId = previousSenderId, NewSenderId = (string?)null })),
+                cancellationToken);
         }
 
         await auditService.RecordAsync(
@@ -256,6 +413,16 @@ public sealed class RoutingService(
                 "RoutingDestination",
                 null,
                 JsonSerializer.Serialize(new { command.DestinationId, command.DisconnectVideo, command.DisconnectAudio, command.DisconnectAncillary })),
+            cancellationToken);
+        await auditService.RecordAsync(
+            new CreateAuditEntryCommand(
+                AuditActionType.RouteRequestCompleted,
+                command.RequestedBy,
+                $"Routing destination disconnect completed for '{command.DestinationId}'.",
+                command.DestinationId,
+                "RoutingDestination",
+                null,
+                JsonSerializer.Serialize(new { command.DestinationId })),
             cancellationToken);
 
         return ServiceResult.Success("Routing disconnect submitted.");

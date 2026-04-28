@@ -11,6 +11,14 @@ namespace NmosController.Api.Controllers;
 [Route("api/v{version:apiVersion}")]
 public sealed class TopologyController(ITopologyService topologyService) : ControllerBase
 {
+    public sealed record ReceiverGroupingDiagnosticDto(
+        string ReceiverId,
+        string ReceiverLabel,
+        string DeviceId,
+        string SignalType,
+        string RoutingDestinationId,
+        string RoutingDestinationLabel);
+
     [HttpGet("topology")]
     [ProducesResponseType(typeof(ApiEnvelope<TopologyGraphDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTopologyAsync([FromQuery] bool refresh = false, CancellationToken cancellationToken = default)
@@ -33,6 +41,26 @@ public sealed class TopologyController(ITopologyService topologyService) : Contr
     {
         var receivers = await topologyService.GetReceiversAsync(refresh, cancellationToken);
         return Ok(new ApiEnvelope<IReadOnlyCollection<NmosReceiverDto>>(receivers, DateTimeOffset.UtcNow));
+    }
+
+    [HttpGet("topology/diagnostics/receiver-groups")]
+    [ProducesResponseType(typeof(ApiEnvelope<IReadOnlyCollection<ReceiverGroupingDiagnosticDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetReceiverGroupsAsync([FromQuery] bool refresh = true, CancellationToken cancellationToken = default)
+    {
+        var receivers = await topologyService.GetReceiversAsync(refresh, cancellationToken);
+        var payload = receivers
+            .Select(
+                x => new ReceiverGroupingDiagnosticDto(
+                    x.Id,
+                    x.Label,
+                    x.DeviceId,
+                    x.SignalType,
+                    x.RoutingDestinationId,
+                    x.RoutingDestinationLabel))
+            .OrderBy(x => x.ReceiverLabel)
+            .ToArray();
+
+        return Ok(new ApiEnvelope<IReadOnlyCollection<ReceiverGroupingDiagnosticDto>>(payload, DateTimeOffset.UtcNow));
     }
 
     [HttpGet("resources/{resourceId}")]

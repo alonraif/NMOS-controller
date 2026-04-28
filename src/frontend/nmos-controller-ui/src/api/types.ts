@@ -187,6 +187,7 @@ export interface TopologyGraph {
 export interface RoutingSource {
   id: string;
   label: string;
+  groupHint: string;
   layer: string;
   primarySenderId: string | null;
   secondarySenderId: string | null;
