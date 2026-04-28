@@ -318,6 +318,7 @@ pre {
 
 .stack-xl {
   gap: 24px;
+  position: relative;
 }
 
 .card {
@@ -450,6 +451,118 @@ pre {
 
 .resource-card {
   padding: 18px;
+}
+
+.soft-route-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(123, 156, 201, 0.2);
+  border-radius: 16px;
+  background: rgba(10, 18, 30, 0.92);
+  color: inherit;
+  display: grid;
+  gap: 6px;
+  aspect-ratio: 1 / 1;
+  align-content: start;
+  padding: 10px;
+}
+
+.soft-route-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.soft-route-title-row strong {
+  font-size: 0.84rem;
+  line-height: 1.2;
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.soft-route-grid {
+  --soft-route-card-size: 132px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--soft-route-card-size), var(--soft-route-card-size)));
+  justify-content: start;
+  gap: 12px;
+}
+
+.soft-route-panel {
+  display: grid;
+  align-content: start;
+}
+
+.soft-layout-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.soft-layout-toggle .ghost-button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.84rem;
+}
+
+.soft-route-scroll {
+  max-height: 68vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  align-content: start;
+}
+
+.soft-route-card.is-selected {
+  border-color: rgba(255, 171, 36, 0.95);
+  background: rgba(70, 42, 0, 0.75);
+}
+
+.soft-route-card.is-linked {
+  border-color: rgba(255, 171, 36, 0.95);
+  background: rgba(70, 42, 0, 0.75);
+}
+
+.soft-route-card.is-success {
+  border-color: rgba(64, 206, 129, 0.95);
+  background: rgba(18, 56, 33, 0.84);
+}
+
+.soft-route-card.is-error {
+  border-color: rgba(239, 89, 89, 0.96);
+  background: rgba(74, 22, 22, 0.84);
+}
+
+.soft-route-card.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.soft-panel-message {
+  position: absolute;
+  top: 70px;
+  right: 0;
+  z-index: 20;
+  padding: 6px 10px;
+  font-size: 0.86rem;
+  color: #cfe0f5;
+  background: rgba(7, 14, 24, 0.86);
+  border-radius: 8px;
+}
+
+@media (max-width: 1280px) {
+  .soft-layout-side-by-side .soft-route-grid,
+  .soft-layout-top-to-bottom .soft-route-grid {
+    --soft-route-card-size: 124px;
+  }
+}
+
+@media (max-width: 900px) {
+  .soft-layout-side-by-side .soft-route-grid,
+  .soft-layout-top-to-bottom .soft-route-grid {
+    --soft-route-card-size: 116px;
+  }
 }
 
 .mono,
