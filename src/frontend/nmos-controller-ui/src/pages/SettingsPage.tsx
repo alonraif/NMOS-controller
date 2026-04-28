@@ -18,6 +18,10 @@ export function SettingsPage() {
     return <ErrorPanel message={registryQuery.error.message} />;
   }
 
+  if (!registryQuery.data) {
+    return <ErrorPanel message="Registry settings are unavailable." />;
+  }
+
   const registry = registryQuery.data;
   const storedUiUrl = window.localStorage.getItem("nmos_controller_ui_url");
   const controllerUiUrl = storedUiUrl ?? window.location.origin;

@@ -25,8 +25,8 @@ export function SetupWizardPage() {
   const [baseUrl, setBaseUrl] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const hasInitialData = Boolean(registryQuery.data);
-  const isInitialSetup = hasInitialData && !registryQuery.data.initialSetupCompleted;
+  const registry = registryQuery.data;
+  const isInitialSetup = Boolean(registry && !registry.initialSetupCompleted);
 
   useEffect(() => {
     if (!registryQuery.data) {
@@ -62,6 +62,10 @@ export function SetupWizardPage() {
 
   if (registryQuery.isError) {
     return <ErrorPanel message={registryQuery.error.message} />;
+  }
+
+  if (!registry) {
+    return <ErrorPanel message="Registry settings are unavailable." />;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
