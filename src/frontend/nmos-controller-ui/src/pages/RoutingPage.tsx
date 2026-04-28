@@ -286,9 +286,9 @@ export function RoutingPage() {
                       <strong>{bundle.label}</strong>
                     </div>
                     <div className="soft-route-badge-row">
-                      <StatusBadge tone={bundle.videoReceiverId ? "success" : "default"}>V</StatusBadge>
-                      <StatusBadge tone={bundle.audioReceiverId ? "success" : "default"}>A</StatusBadge>
-                      <StatusBadge tone={bundle.ancillaryReceiverId ? "success" : "default"}>ANC</StatusBadge>
+                      <StatusBadge tone={bundle.videoReceiverId ? "success" : "muted"}>V</StatusBadge>
+                      <StatusBadge tone={bundle.audioReceiverId ? "success" : "muted"}>A</StatusBadge>
+                      <StatusBadge tone={bundle.ancillaryReceiverId ? "success" : "muted"}>ANC</StatusBadge>
                     </div>
                   </button>
                 ))}
@@ -316,9 +316,9 @@ export function RoutingPage() {
                         <strong>{bundle.label}</strong>
                       </div>
                       <div className="soft-route-badge-row">
-                        <StatusBadge tone={bundle.videoSenderId ? "success" : "default"}>V</StatusBadge>
-                        <StatusBadge tone={bundle.audioSenderId ? "success" : "default"}>A</StatusBadge>
-                        <StatusBadge tone={bundle.ancillarySenderId ? "success" : "default"}>ANC</StatusBadge>
+                        <StatusBadge tone={bundle.videoSenderId ? "success" : "muted"}>V</StatusBadge>
+                        <StatusBadge tone={bundle.audioSenderId ? "success" : "muted"}>A</StatusBadge>
+                        <StatusBadge tone={bundle.ancillarySenderId ? "success" : "muted"}>ANC</StatusBadge>
                       </div>
                     </button>
                   );
