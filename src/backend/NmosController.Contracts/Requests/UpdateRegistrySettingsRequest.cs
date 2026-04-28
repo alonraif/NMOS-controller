@@ -23,4 +23,5 @@ public sealed class UpdateRegistrySettingsRequest
     public string ConnectionApiVersion { get; set; } = "v1.1";
 
     public bool IsEnabled { get; set; } = true;
+    public bool? InitialSetupCompleted { get; set; }
 }

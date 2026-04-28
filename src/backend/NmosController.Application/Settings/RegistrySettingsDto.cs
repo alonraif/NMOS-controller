@@ -9,4 +9,5 @@ public sealed record RegistrySettingsDto(
     string QueryApiVersion,
     string ConnectionApiVersion,
     bool IsEnabled,
+    bool InitialSetupCompleted,
     DateTimeOffset UpdatedAtUtc);

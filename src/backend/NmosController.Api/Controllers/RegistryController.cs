@@ -35,7 +35,8 @@ public sealed class RegistryController(IRegistryService registryService) : Contr
                 request.ConnectionBaseUrls,
                 request.QueryApiVersion,
                 request.ConnectionApiVersion,
-                request.IsEnabled),
+                request.IsEnabled,
+                request.InitialSetupCompleted),
             cancellationToken);
 
         return Ok(new ApiEnvelope<RegistrySettingsDto>(result, DateTimeOffset.UtcNow));

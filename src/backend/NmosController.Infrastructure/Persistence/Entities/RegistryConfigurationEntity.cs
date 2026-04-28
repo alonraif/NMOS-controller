@@ -10,5 +10,6 @@ public sealed class RegistryConfigurationEntity
     public string QueryApiVersion { get; set; } = "v1.3";
     public string ConnectionApiVersion { get; set; } = "v1.1";
     public bool IsEnabled { get; set; } = true;
+    public bool InitialSetupCompleted { get; set; }
     public DateTimeOffset UpdatedAtUtc { get; set; }
 }

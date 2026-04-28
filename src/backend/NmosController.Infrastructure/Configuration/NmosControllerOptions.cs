@@ -35,5 +35,5 @@ public sealed class NmosHttpOptions
 
 public sealed class CorsOptions
 {
-    public string AllowedOrigins { get; set; } = "http://localhost:5173,http://localhost,http://localhost:8080,http://172.16.32.58";
+    public string AllowedOrigins { get; set; } = "*";
 }

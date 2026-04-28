@@ -10,6 +10,7 @@ public sealed class Registry
     public string QueryApiVersion { get; private set; } = "v1.3";
     public string ConnectionApiVersion { get; private set; } = "v1.1";
     public bool IsEnabled { get; private set; } = true;
+    public bool InitialSetupCompleted { get; private set; }
     public DateTimeOffset UpdatedAtUtc { get; private set; } = DateTimeOffset.UtcNow;
 
     public void Update(
@@ -20,7 +21,8 @@ public sealed class Registry
         bool isEnabled,
         DateTimeOffset updatedAtUtc,
         string? connectionBaseUrl = null,
-        string? connectionBaseUrls = null)
+        string? connectionBaseUrls = null,
+        bool? initialSetupCompleted = null)
     {
         Name = name;
         BaseUrl = baseUrl;
@@ -29,6 +31,10 @@ public sealed class Registry
         QueryApiVersion = queryApiVersion;
         ConnectionApiVersion = connectionApiVersion;
         IsEnabled = isEnabled;
+        if (initialSetupCompleted.HasValue)
+        {
+            InitialSetupCompleted = initialSetupCompleted.Value;
+        }
         UpdatedAtUtc = updatedAtUtc;
     }
 }

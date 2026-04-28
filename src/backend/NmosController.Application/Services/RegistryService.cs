@@ -34,7 +34,8 @@ public sealed class RegistryService(IRegistryRepository registryRepository) : IR
             command.IsEnabled,
             DateTimeOffset.UtcNow,
             normalizedConnectionBaseUrl,
-            normalizedConnectionBaseUrls);
+            normalizedConnectionBaseUrls,
+            command.InitialSetupCompleted);
 
         await registryRepository.SaveAsync(registry, cancellationToken);
         return registry.ToDto();

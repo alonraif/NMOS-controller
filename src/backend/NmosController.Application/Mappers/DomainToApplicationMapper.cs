@@ -20,6 +20,7 @@ public static class DomainToApplicationMapper
             registry.QueryApiVersion,
             registry.ConnectionApiVersion,
             registry.IsEnabled,
+            registry.InitialSetupCompleted,
             registry.UpdatedAtUtc);
 
     public static RegistrySummaryDto ToSummaryDto(this Registry registry) =>

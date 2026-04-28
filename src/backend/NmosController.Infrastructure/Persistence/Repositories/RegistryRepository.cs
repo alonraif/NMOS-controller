@@ -32,7 +32,8 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
             entity.IsEnabled,
             entity.UpdatedAtUtc,
             entity.ConnectionBaseUrl,
-            entity.ConnectionBaseUrls);
+            entity.ConnectionBaseUrls,
+            entity.InitialSetupCompleted);
 
         return registry;
     }
@@ -54,6 +55,7 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
                 QueryApiVersion = registry.QueryApiVersion,
                 ConnectionApiVersion = registry.ConnectionApiVersion,
                 IsEnabled = registry.IsEnabled,
+                InitialSetupCompleted = registry.InitialSetupCompleted,
                 UpdatedAtUtc = registry.UpdatedAtUtc
             });
         }
@@ -66,6 +68,7 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
             existing.QueryApiVersion = registry.QueryApiVersion;
             existing.ConnectionApiVersion = registry.ConnectionApiVersion;
             existing.IsEnabled = registry.IsEnabled;
+            existing.InitialSetupCompleted = registry.InitialSetupCompleted;
             existing.UpdatedAtUtc = registry.UpdatedAtUtc;
         }
 

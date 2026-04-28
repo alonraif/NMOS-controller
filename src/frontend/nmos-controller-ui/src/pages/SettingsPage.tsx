@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useRegistry, useUpdateRegistry } from "../api/hooks";
 import { Card } from "../components/Card";
 import { ErrorPanel } from "../components/ErrorPanel";
@@ -55,6 +56,11 @@ export function SettingsPage() {
   return (
     <div className="stack-xl">
       <PageHeader title="Settings" subtitle="Edit controller-owned live registry settings." />
+      <div className="button-row">
+        <Link className="ghost-button" to="/setup-wizard">
+          Run Setup Wizard
+        </Link>
+      </div>
       <Card title="Registry Configuration" subtitle="The frontend never talks directly to NMOS endpoints.">
         <form className="settings-form" onSubmit={(event) => void handleSubmit(event)}>
           <label className="form-field">

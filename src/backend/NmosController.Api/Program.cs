@@ -54,13 +54,22 @@ builder.Services.AddInfrastructure(builder.Configuration);
 var corsOrigins = builder.Configuration.GetSection($"{NmosControllerOptions.SectionName}:Cors")
     .Get<CorsOptions>()?.AllowedOrigins
     ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-    ?? ["http://localhost:5173", "http://localhost", "http://localhost:8080", "http://172.16.32.58"];
+    ?? ["*"];
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
         "nmos-controller-ui",
-        policy => policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod());
+        policy =>
+        {
+            if (corsOrigins.Any(origin => origin == "*"))
+            {
+                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                return;
+            }
+
+            policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod();
+        });
 });
 builder.Services
     .AddOpenTelemetry()

@@ -7,4 +7,5 @@ public sealed record UpdateRegistrySettingsCommand(
     string? ConnectionBaseUrls,
     string QueryApiVersion,
     string ConnectionApiVersion,
-    bool IsEnabled);
+    bool IsEnabled,
+    bool? InitialSetupCompleted);

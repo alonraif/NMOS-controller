@@ -65,6 +65,7 @@ internal sealed class DatabaseInitializationHostedService(
                 QueryApiVersion = options.Registry.QueryApiVersion,
                 ConnectionApiVersion = options.Registry.ConnectionApiVersion,
                 IsEnabled = options.Registry.IsEnabled,
+                InitialSetupCompleted = false,
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             });
         }
@@ -120,6 +121,10 @@ internal sealed class DatabaseInitializationHostedService(
             cancellationToken);
         await database.ExecuteSqlRawAsync(
             "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"ConnectionBaseUrls\" character varying(4096);",
+            [],
+            cancellationToken);
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"InitialSetupCompleted\" boolean NOT NULL DEFAULT FALSE;",
             [],
             cancellationToken);
     }

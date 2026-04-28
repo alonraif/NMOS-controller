@@ -26,6 +26,7 @@ export interface RegistrySummary {
 export interface RegistrySettings extends RegistrySummary {
   connectionBaseUrl: string | null;
   connectionBaseUrls: string | null;
+  initialSetupCompleted: boolean;
   updatedAtUtc: string;
 }
 
@@ -355,4 +356,5 @@ export interface UpdateRegistryPayload {
   queryApiVersion: string;
   connectionApiVersion: string;
   isEnabled: boolean;
+  initialSetupCompleted?: boolean;
 }

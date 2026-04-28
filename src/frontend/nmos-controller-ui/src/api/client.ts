@@ -20,8 +20,8 @@ import type {
   UpdateRegistryPayload,
   UpsertPresetPayload,
 } from "./types";
+import { getApiRoot } from "./runtimeConfig";
 
-const API_ROOT = "/api/v1";
 const REQUEST_TIMEOUT_MS = 12_000;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -30,7 +30,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
 
   try {
-    response = await fetch(`${API_ROOT}${path}`, {
+    response = await fetch(`${getApiRoot()}${path}`, {
       headers: {
         "Content-Type": "application/json",
         ...(init?.headers ?? {}),
