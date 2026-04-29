@@ -69,7 +69,7 @@ internal sealed class DatabaseInitializationHostedService(
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             });
         }
-        else if (!existingRegistry.InitialSetupCompleted)
+        else
         {
             existingRegistry.Name = options.Registry.Name;
             existingRegistry.BaseUrl = options.Registry.BaseUrl;

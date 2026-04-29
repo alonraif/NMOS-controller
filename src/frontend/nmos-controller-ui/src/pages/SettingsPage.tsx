@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { getApiRoot } from "../api/runtimeConfig";
 import { useRegistry } from "../api/hooks";
 import { Card } from "../components/Card";
@@ -37,7 +36,6 @@ export function SettingsPage() {
     { label: "Registry Enabled", value: registry.isEnabled ? "Yes" : "No" },
     { label: "IS-05 Connection Base URL", value: registry.connectionBaseUrl ?? "Not set" },
     { label: "IS-05 Connection Base URLs", value: registry.connectionBaseUrls ?? "Not set" },
-    { label: "Initial Setup Completed", value: registry.initialSetupCompleted ? "Yes" : "No" },
     { label: "Last Updated (UTC)", value: new Date(registry.updatedAtUtc).toISOString() },
   ];
 
@@ -45,14 +43,7 @@ export function SettingsPage() {
     <div className="stack-xl">
       <PageHeader title="Settings" subtitle="System configuration summary." />
       <Card title="System Settings" subtitle="Read-only values currently active in this deployment.">
-        <div className="stack">
-          <KeyValueList items={items} />
-          <div className="button-row">
-            <Link className="ghost-button" to="/setup-wizard">
-              Run Setup Wizard
-            </Link>
-          </div>
-        </div>
+        <KeyValueList items={items} />
       </Card>
     </div>
   );
