@@ -7,8 +7,17 @@ services:
     restart: unless-stopped
     network_mode: host
     privileged: true
+    command: ["/bin/sh", "/home/render-registry-config.sh"]
     environment:
       RUN_NODE: "FALSE"
+      NMOS_REGISTRY_HOST_ADDRESS: ${NMOS_REGISTRY_HOST_ADDRESS:-127.0.0.1}
+      NMOS_REGISTRY_HTTP_PORT: ${NMOS_REGISTRY_HTTP_PORT:-8081}
+      NMOS_REGISTRY_QUERY_WS_PORT: ${NMOS_REGISTRY_QUERY_WS_PORT:-8082}
+      NMOS_REGISTRY_REGISTRATION_EXPIRY_INTERVAL: ${NMOS_REGISTRY_REGISTRATION_EXPIRY_INTERVAL:-30}
+      NMOS_REGISTRY_PRIORITY: ${NMOS_REGISTRY_PRIORITY:-99}
+      NMOS_REGISTRY_LOGGING_LEVEL: ${NMOS_REGISTRY_LOGGING_LEVEL:--20}
+      NMOS_REGISTRY_HTTP_TRACE: ${NMOS_REGISTRY_HTTP_TRACE:-false}
+      NMOS_REGISTRY_ALLOW_INVALID_RESOURCES: ${NMOS_REGISTRY_ALLOW_INVALID_RESOURCES:-false}
+      NMOS_REGISTRY_LABEL: ${NMOS_REGISTRY_LABEL:-nmos-controller-registry}
     volumes:
-      - ./docker/real-nmos-registry/registry.json:/home/registry.json:ro
-
+      - ./docker/real-nmos-registry/render-registry-config.sh:/home/render-registry-config.sh:ro

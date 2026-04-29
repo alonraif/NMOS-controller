@@ -1,6 +1,6 @@
 # Real NMOS Registry Container
 
-This directory contains the runtime configuration for the live NMOS Registry service.
+This directory contains runtime configuration helpers for the live NMOS Registry service.
 
 The Compose service uses the `rhastie/nmos-cpp` image, which packages the Sony `nmos-cpp` implementation. It runs in registry/controller mode with `RUN_NODE=FALSE`.
 
@@ -22,3 +22,15 @@ Then point the controller at the registry:
 ```env
 NMOS_CONTROLLER__REGISTRY__BASEURL=http://192.168.170.2:8081
 ```
+
+The registry bind/advertised address is driven by `.env`:
+
+```env
+NMOS_REGISTRY_HOST_ADDRESS=192.168.170.2
+NMOS_REGISTRY_HTTP_PORT=8081
+NMOS_REGISTRY_QUERY_WS_PORT=8082
+NMOS_REGISTRY_REGISTRATION_EXPIRY_INTERVAL=30
+```
+
+`docker/real-nmos-registry/render-registry-config.sh` renders `/home/registry.json`
+inside the container at startup, then executes the image entrypoint.
