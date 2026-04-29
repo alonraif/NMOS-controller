@@ -260,6 +260,23 @@ History details are metadata-driven and resolve known resource IDs to labels in 
 - Deployment: [docs/deployment.md](docs/deployment.md)
 - Interop notes: [docs/nmos-interop-notes.md](docs/nmos-interop-notes.md)
 
+## Versioning and Releases
+
+- Project release versioning uses SemVer tags (`vMAJOR.MINOR.PATCH`).
+- This release baseline is `v1.0.0`.
+- Backend runtime version is exposed at:
+  - `GET /version`
+  - `GET /health`
+  - `GET /ready`
+  - `GET /`
+
+Create and push the `v1.0.0` tag:
+
+```bash
+git tag -a v1.0.0 -m "NmosController v1.0.0"
+git push origin v1.0.0
+```
+
 ## Testing
 
 Current test projects:

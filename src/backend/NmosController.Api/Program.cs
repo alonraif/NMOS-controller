@@ -6,6 +6,7 @@ using NmosController.Infrastructure;
 using NmosController.Infrastructure.Configuration;
 using OpenTelemetry.Metrics;
 using Serilog;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +82,7 @@ builder.Services
     });
 
 var app = builder.Build();
+var serviceVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
 
 app.UseSerilogRequestLogging();
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -97,6 +99,7 @@ app.MapGet(
             new
             {
                 service = "NmosController.Api",
+                version = serviceVersion,
                 status = "ok",
                 utc = DateTimeOffset.UtcNow
             }))
@@ -108,6 +111,7 @@ app.MapGet(
             new
             {
                 status = "Healthy",
+                version = serviceVersion,
                 utc = DateTimeOffset.UtcNow
             }))
     .WithName("Health");
@@ -118,9 +122,21 @@ app.MapGet(
             new
             {
                 status = "Ready",
+                version = serviceVersion,
                 utc = DateTimeOffset.UtcNow
             }))
     .WithName("Readiness");
+
+app.MapGet(
+        "/version",
+        () => Results.Ok(
+            new
+            {
+                service = "NmosController.Api",
+                version = serviceVersion,
+                utc = DateTimeOffset.UtcNow
+            }))
+    .WithName("Version");
 
 app.MapPrometheusScrapingEndpoint("/metrics");
 app.MapControllers();
