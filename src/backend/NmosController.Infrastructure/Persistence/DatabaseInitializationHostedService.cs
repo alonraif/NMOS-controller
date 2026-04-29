@@ -50,7 +50,7 @@ internal sealed class DatabaseInitializationHostedService(
         await EnsureSchemaFixupsAsync(dbContext, cancellationToken);
 
         var existingRegistry = await dbContext.Registries
-            .OrderBy(entity => entity.UpdatedAtUtc)
+            .OrderByDescending(entity => entity.UpdatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existingRegistry is null)
@@ -68,6 +68,17 @@ internal sealed class DatabaseInitializationHostedService(
                 InitialSetupCompleted = false,
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             });
+        }
+        else if (!existingRegistry.InitialSetupCompleted)
+        {
+            existingRegistry.Name = options.Registry.Name;
+            existingRegistry.BaseUrl = options.Registry.BaseUrl;
+            existingRegistry.ConnectionBaseUrl = options.Registry.ConnectionBaseUrl;
+            existingRegistry.ConnectionBaseUrls = options.Registry.ConnectionBaseUrls;
+            existingRegistry.QueryApiVersion = options.Registry.QueryApiVersion;
+            existingRegistry.ConnectionApiVersion = options.Registry.ConnectionApiVersion;
+            existingRegistry.IsEnabled = options.Registry.IsEnabled;
+            existingRegistry.UpdatedAtUtc = DateTimeOffset.UtcNow;
         }
 
         if (!await dbContext.Presets.AnyAsync(cancellationToken))
