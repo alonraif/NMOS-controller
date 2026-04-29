@@ -1,6 +1,20 @@
 # Deployment
 
-## Local Docker Startup
+## Prerequisites
+
+- Docker Engine 24+ (or current stable)
+- Docker Compose v2 plugin
+- Linux host with required ports reachable from operator clients
+
+Verify Compose v2:
+
+```bash
+docker compose version
+```
+
+Do not use legacy `docker-compose` v1 for production on modern Docker engines. It can fail with errors such as `KeyError: 'ContainerConfig'`.
+
+## Local/Lab Startup
 
 1. Copy the environment file:
 
@@ -19,6 +33,64 @@ docker compose up --build
 - Frontend: `http://localhost`
 - Backend API: `http://localhost:8080`
 - Swagger: `http://localhost:8080/swagger`
+
+4. Stop:
+
+```bash
+docker compose down
+```
+
+## Production Runbook
+
+1. Prepare environment:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` for production values:
+- real registry endpoints
+- CORS allowed origins
+- frontend/backend bind and port settings
+- PostgreSQL connection string (if overriding default)
+
+3. Start in detached mode:
+
+```bash
+docker compose up -d --build
+```
+
+4. Verify service state:
+
+```bash
+docker compose ps
+docker compose logs --since=10m
+```
+
+5. Verify real NMOS registry reachability from the controller host:
+
+```bash
+curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+  http://127.0.0.1:8081/x-nmos/query/v1.3/nodes
+```
+
+Expected result: `HTTP 200`.
+
+6. Operational lifecycle:
+
+```bash
+docker compose logs -f backend
+docker compose restart backend
+docker compose down
+```
+
+If you hit stale container conflicts during upgrade/recreate:
+
+```bash
+docker compose down --remove-orphans
+docker rm -f nmos-controller-real-registry nmos-controller-postgres nmos-controller-backend nmos-controller-frontend 2>/dev/null || true
+docker compose up -d --build
+```
 
 ## Stack Components
 
@@ -52,7 +124,7 @@ For live operation:
 This repository includes a Compose definition for the separate real registry service:
 
 ```bash
-docker-compose -f docker-compose.live-registry.yml up -d
+docker compose -f docker-compose.live-registry.yml up -d
 ```
 
 The default live registry config uses the `rhastie/nmos-cpp` container image with `RUN_NODE=FALSE`, host networking, and `docker/real-nmos-registry/registry.json`. It exposes the IS-04 Registration and Query APIs on `http://<host>:8081/x-nmos/...` and the Query WebSocket API on `8082`.
@@ -84,9 +156,7 @@ docker compose logs -f backend
 docker compose down
 ```
 
-To persist data across restarts:
-
-- keep the `postgres-data` Docker volume
+To persist data across restarts, keep the `postgres-data` Docker volume.
 
 To rebuild after code changes:
 
@@ -98,14 +168,23 @@ docker compose up --build -d
 
 Primary environment variables:
 
+- `BACKEND_PORT`
+- `FRONTEND_PORT`
+- `FRONTEND_BIND_IP`
 - `NMOS_CONTROLLER__REGISTRY__BASEURL`
 - `NMOS_CONTROLLER__REGISTRY__QUERYAPIVERSION`
 - `NMOS_CONTROLLER__REGISTRY__CONNECTIONAPIVERSION`
+- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL`
+- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS`
 - `NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING`
 - `NMOS_CONTROLLER__HTTP__TIMEOUTSECONDS`
 - `NMOS_CONTROLLER__CORS__ALLOWEDORIGINS`
-- `VITE_API_BASE_URL`
 - `NMOS_REGISTRY_IMAGE`
+
+Reference templates:
+
+- `.env.example`
+- `.env.live.example`
 
 ## Production Guidance
 

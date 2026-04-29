@@ -44,7 +44,21 @@ The React operator UI currently provides:
 - `Settings`
   - controller/registry settings management
 
-## Quick Start
+## Prerequisites
+
+- Docker Engine 24+ (or current stable)
+- Docker Compose v2 plugin (`docker compose ...`)
+- Linux host with open ports required by your deployment
+
+Verify Compose v2 is installed:
+
+```bash
+docker compose version
+```
+
+If your host only has legacy `docker-compose` v1, install the Compose v2 plugin before deploying. Compose v1 can fail on newer Docker engines with errors like `KeyError: 'ContainerConfig'`.
+
+## Quick Start (Local/Lab)
 
 ```bash
 cp .env.example .env
@@ -82,6 +96,52 @@ Emergency bypass (if a deployment gets stuck in wizard routing):
 ```js
 localStorage.setItem("nmos_controller_wizard_bypass", "true");
 location.href = "/settings";
+```
+
+## Production Deployment
+
+1. Prepare environment file:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` for your real environment (registry URLs, CORS, host/IP bindings, ports).
+
+3. Build and start:
+
+```bash
+docker compose up -d --build
+```
+
+4. Verify services:
+
+```bash
+docker compose ps
+docker compose logs --since=10m
+```
+
+5. Verify NMOS registry reachability from the controller host:
+
+```bash
+curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+  http://127.0.0.1:8081/x-nmos/query/v1.3/nodes
+```
+
+Expected result: `HTTP 200`.
+
+6. Stop stack when needed:
+
+```bash
+docker compose down
+```
+
+If you run into old-container conflicts during upgrades, clean and recreate:
+
+```bash
+docker compose down --remove-orphans
+docker rm -f nmos-controller-real-registry nmos-controller-postgres nmos-controller-backend nmos-controller-frontend 2>/dev/null || true
+docker compose up -d --build
 ```
 
 ## Live UI Dev Mode (No Rebuilds)
@@ -151,15 +211,33 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 - `nmos-controller-ui`
   - React + TypeScript operator UI using React Query
 
-## Registry Configuration
+## Configuration Reference
 
-Set the backend to your real NMOS registry endpoints:
+Set these in `.env` for deployment:
 
-- `NMOS_CONTROLLER__REGISTRY__BASEURL=<real registry IS-04 Query API host>`
-- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL=<single IS-05 base URL override, optional>`
-- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS=<comma-separated IS-05 fallback bases for multi-device estates, optional>`
+- `BACKEND_PORT`: backend listen port (default `8080`)
+- `FRONTEND_PORT`: frontend service port (default `80`)
+- `FRONTEND_BIND_IP`: bind address for frontend process (default `127.0.0.1`)
+- `NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING`: PostgreSQL connection string used by backend
+- `NMOS_CONTROLLER__REGISTRY__NAME`: display name for configured registry
+- `NMOS_CONTROLLER__REGISTRY__BASEURL`: IS-04 Query API base URL (required for real deployments)
+- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL`: optional single IS-05 Connection API override
+- `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS`: optional comma-separated IS-05 fallback URLs
+- `NMOS_CONTROLLER__CORS__ALLOWEDORIGINS`: comma-separated allowed UI origins
 
-Other commonly used runtime options are included in `.env.example` and `.env.live.example`.
+For built-in lab registry container settings (when using `real-nmos-registry` service):
+
+- `NMOS_REGISTRY_HOST_ADDRESS`
+- `NMOS_REGISTRY_HTTP_PORT`
+- `NMOS_REGISTRY_QUERY_WS_PORT`
+- `NMOS_REGISTRY_LABEL`
+
+Templates:
+
+- `.env.example`: baseline defaults
+- `.env.live.example`: live deployment-oriented defaults
+
+After first start, complete the setup wizard in the UI to persist controller settings in PostgreSQL.
 
 ## History and Event Model
 
