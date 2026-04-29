@@ -14,6 +14,9 @@ public sealed class RegistryOptions
 {
     public string Name { get; set; } = "Live Registry";
     public string BaseUrl { get; set; } = "http://localhost:8081";
+    public string DiscoveryMode { get; set; } = "Manual";
+    public string MdnsQueryServiceType { get; set; } = "_nmos-query._tcp.local.";
+    public int MdnsResolveTimeoutMilliseconds { get; set; } = 2000;
     public string? ConnectionBaseUrl { get; set; }
     public string? ConnectionBaseUrls { get; set; }
     public string QueryApiVersion { get; set; } = "v1.3";

@@ -27,6 +27,9 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
         registry.Update(
             entity.Name,
             baseUri,
+            entity.DiscoveryMode,
+            entity.MdnsQueryServiceType,
+            entity.MdnsResolveTimeoutMilliseconds,
             entity.QueryApiVersion,
             entity.ConnectionApiVersion,
             entity.IsEnabled,
@@ -50,6 +53,9 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
                 Id = registry.Id,
                 Name = registry.Name,
                 BaseUrl = registry.BaseUrl.ToString(),
+                DiscoveryMode = registry.DiscoveryMode,
+                MdnsQueryServiceType = registry.MdnsQueryServiceType,
+                MdnsResolveTimeoutMilliseconds = registry.MdnsResolveTimeoutMilliseconds,
                 ConnectionBaseUrl = registry.ConnectionBaseUrl,
                 ConnectionBaseUrls = registry.ConnectionBaseUrls,
                 QueryApiVersion = registry.QueryApiVersion,
@@ -63,6 +69,9 @@ public sealed class RegistryRepository(ControllerDbContext dbContext) : IRegistr
         {
             existing.Name = registry.Name;
             existing.BaseUrl = registry.BaseUrl.ToString();
+            existing.DiscoveryMode = registry.DiscoveryMode;
+            existing.MdnsQueryServiceType = registry.MdnsQueryServiceType;
+            existing.MdnsResolveTimeoutMilliseconds = registry.MdnsResolveTimeoutMilliseconds;
             existing.ConnectionBaseUrl = registry.ConnectionBaseUrl;
             existing.ConnectionBaseUrls = registry.ConnectionBaseUrls;
             existing.QueryApiVersion = registry.QueryApiVersion;

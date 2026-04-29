@@ -221,6 +221,9 @@ Set these in `.env` for deployment:
 - `NMOS_CONTROLLER__POSTGRES__CONNECTIONSTRING`: PostgreSQL connection string used by backend
 - `NMOS_CONTROLLER__REGISTRY__NAME`: display name for configured registry
 - `NMOS_CONTROLLER__REGISTRY__BASEURL`: IS-04 Query API base URL (required for real deployments)
+- `NMOS_CONTROLLER__REGISTRY__DISCOVERYMODE`: `Manual` or `Mdns` registry discovery mode
+- `NMOS_CONTROLLER__REGISTRY__MDNSQUERYSERVICETYPE`: DNS-SD service type for IS-04 lookup (default `_nmos-query._tcp.local.`)
+- `NMOS_CONTROLLER__REGISTRY__MDNSRESOLVETIMEOUTMILLISECONDS`: mDNS resolve timeout in milliseconds
 - `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURL`: optional single IS-05 Connection API override
 - `NMOS_CONTROLLER__REGISTRY__CONNECTIONBASEURLS`: optional comma-separated IS-05 fallback URLs
 - `NMOS_CONTROLLER__CORS__ALLOWEDORIGINS`: comma-separated allowed UI origins

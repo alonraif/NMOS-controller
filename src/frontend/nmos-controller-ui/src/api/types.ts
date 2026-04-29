@@ -24,6 +24,9 @@ export interface RegistrySummary {
 }
 
 export interface RegistrySettings extends RegistrySummary {
+  discoveryMode: string;
+  mdnsQueryServiceType: string;
+  mdnsResolveTimeoutMilliseconds: number;
   connectionBaseUrl: string | null;
   connectionBaseUrls: string | null;
   initialSetupCompleted: boolean;
@@ -351,6 +354,9 @@ export interface ExecutePresetPayload {
 export interface UpdateRegistryPayload {
   name: string;
   baseUrl: string;
+  discoveryMode: string;
+  mdnsQueryServiceType: string;
+  mdnsResolveTimeoutMilliseconds: number;
   connectionBaseUrl?: string | null;
   connectionBaseUrls?: string | null;
   queryApiVersion: string;

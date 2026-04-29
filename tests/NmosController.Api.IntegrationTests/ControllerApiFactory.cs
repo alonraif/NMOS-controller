@@ -104,11 +104,37 @@ public sealed class ControllerApiFactory : WebApplicationFactory<Program>
     {
         public Task<RegistrySettingsDto?> GetAsync(CancellationToken cancellationToken) =>
             Task.FromResult<RegistrySettingsDto?>(
-                new RegistrySettingsDto(Guid.Empty, "Live Registry", "http://mock", null, null, "v1.3", "v1.1", true, DateTimeOffset.UtcNow));
+                new RegistrySettingsDto(
+                    Guid.Empty,
+                    "Live Registry",
+                    "http://mock",
+                    RegistryDiscoveryMode.Manual,
+                    "_nmos-query._tcp.local.",
+                    2000,
+                    null,
+                    null,
+                    "v1.3",
+                    "v1.1",
+                    true,
+                    false,
+                    DateTimeOffset.UtcNow));
 
         public Task<RegistrySettingsDto> SaveAsync(UpdateRegistrySettingsCommand command, CancellationToken cancellationToken) =>
             Task.FromResult(
-                new RegistrySettingsDto(Guid.Empty, command.Name, command.BaseUrl, command.ConnectionBaseUrl, command.ConnectionBaseUrls, command.QueryApiVersion, command.ConnectionApiVersion, command.IsEnabled, DateTimeOffset.UtcNow));
+                new RegistrySettingsDto(
+                    Guid.Empty,
+                    command.Name,
+                    command.BaseUrl,
+                    command.DiscoveryMode,
+                    command.MdnsQueryServiceType,
+                    command.MdnsResolveTimeoutMilliseconds,
+                    command.ConnectionBaseUrl,
+                    command.ConnectionBaseUrls,
+                    command.QueryApiVersion,
+                    command.ConnectionApiVersion,
+                    command.IsEnabled,
+                    command.InitialSetupCompleted ?? false,
+                    DateTimeOffset.UtcNow));
     }
 
     private sealed class FakeRoutingService : IRoutingService

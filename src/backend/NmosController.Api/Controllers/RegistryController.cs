@@ -31,6 +31,9 @@ public sealed class RegistryController(IRegistryService registryService) : Contr
             new UpdateRegistrySettingsCommand(
                 request.Name,
                 request.BaseUrl,
+                request.DiscoveryMode,
+                request.MdnsQueryServiceType,
+                request.MdnsResolveTimeoutMilliseconds,
                 request.ConnectionBaseUrl,
                 request.ConnectionBaseUrls,
                 request.QueryApiVersion,

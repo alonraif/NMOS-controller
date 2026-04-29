@@ -60,6 +60,9 @@ internal sealed class DatabaseInitializationHostedService(
                 Id = Guid.NewGuid(),
                 Name = options.Registry.Name,
                 BaseUrl = options.Registry.BaseUrl,
+                DiscoveryMode = options.Registry.DiscoveryMode,
+                MdnsQueryServiceType = options.Registry.MdnsQueryServiceType,
+                MdnsResolveTimeoutMilliseconds = options.Registry.MdnsResolveTimeoutMilliseconds,
                 ConnectionBaseUrl = options.Registry.ConnectionBaseUrl,
                 ConnectionBaseUrls = options.Registry.ConnectionBaseUrls,
                 QueryApiVersion = options.Registry.QueryApiVersion,
@@ -73,6 +76,9 @@ internal sealed class DatabaseInitializationHostedService(
         {
             existingRegistry.Name = options.Registry.Name;
             existingRegistry.BaseUrl = options.Registry.BaseUrl;
+            existingRegistry.DiscoveryMode = options.Registry.DiscoveryMode;
+            existingRegistry.MdnsQueryServiceType = options.Registry.MdnsQueryServiceType;
+            existingRegistry.MdnsResolveTimeoutMilliseconds = options.Registry.MdnsResolveTimeoutMilliseconds;
             existingRegistry.ConnectionBaseUrl = options.Registry.ConnectionBaseUrl;
             existingRegistry.ConnectionBaseUrls = options.Registry.ConnectionBaseUrls;
             existingRegistry.QueryApiVersion = options.Registry.QueryApiVersion;
@@ -136,6 +142,18 @@ internal sealed class DatabaseInitializationHostedService(
             cancellationToken);
         await database.ExecuteSqlRawAsync(
             "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"InitialSetupCompleted\" boolean NOT NULL DEFAULT FALSE;",
+            [],
+            cancellationToken);
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"DiscoveryMode\" character varying(16) NOT NULL DEFAULT 'Manual';",
+            [],
+            cancellationToken);
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"MdnsQueryServiceType\" character varying(128) NOT NULL DEFAULT '_nmos-query._tcp.local.';",
+            [],
+            cancellationToken);
+        await database.ExecuteSqlRawAsync(
+            "ALTER TABLE IF EXISTS registry_configurations ADD COLUMN IF NOT EXISTS \"MdnsResolveTimeoutMilliseconds\" integer NOT NULL DEFAULT 2000;",
             [],
             cancellationToken);
     }

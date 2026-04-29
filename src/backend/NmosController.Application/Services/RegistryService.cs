@@ -21,6 +21,9 @@ public sealed class RegistryService(IRegistryRepository registryRepository) : IR
             throw new InvalidOperationException("Registry base URL is not a valid absolute URI.");
         }
 
+        var discoveryMode = NormalizeDiscoveryMode(command.DiscoveryMode);
+        var mdnsQueryServiceType = NormalizeMdnsQueryServiceType(command.MdnsQueryServiceType);
+        var mdnsResolveTimeoutMilliseconds = NormalizeMdnsResolveTimeoutMilliseconds(command.MdnsResolveTimeoutMilliseconds);
         var normalizedConnectionBaseUrl = NormalizeConnectionBaseUrl(command.ConnectionBaseUrl);
         var normalizedConnectionBaseUrls = NormalizeConnectionBaseUrls(command.ConnectionBaseUrls);
 
@@ -29,6 +32,9 @@ public sealed class RegistryService(IRegistryRepository registryRepository) : IR
         registry.Update(
             command.Name,
             baseUri,
+            discoveryMode,
+            mdnsQueryServiceType,
+            mdnsResolveTimeoutMilliseconds,
             command.QueryApiVersion,
             command.ConnectionApiVersion,
             command.IsEnabled,
@@ -80,5 +86,41 @@ public sealed class RegistryService(IRegistryRepository registryRepository) : IR
         }
 
         return normalized.Count == 0 ? null : string.Join(",", normalized);
+    }
+
+    private static string NormalizeDiscoveryMode(string rawDiscoveryMode)
+    {
+        if (string.Equals(rawDiscoveryMode, RegistryDiscoveryMode.Manual, StringComparison.OrdinalIgnoreCase))
+        {
+            return RegistryDiscoveryMode.Manual;
+        }
+
+        if (string.Equals(rawDiscoveryMode, RegistryDiscoveryMode.Mdns, StringComparison.OrdinalIgnoreCase))
+        {
+            return RegistryDiscoveryMode.Mdns;
+        }
+
+        throw new InvalidOperationException($"Registry discovery mode '{rawDiscoveryMode}' is not supported.");
+    }
+
+    private static string NormalizeMdnsQueryServiceType(string rawMdnsQueryServiceType)
+    {
+        if (string.IsNullOrWhiteSpace(rawMdnsQueryServiceType))
+        {
+            return "_nmos-query._tcp.local.";
+        }
+
+        var normalized = rawMdnsQueryServiceType.Trim();
+        return normalized.EndsWith('.', StringComparison.Ordinal) ? normalized : $"{normalized}.";
+    }
+
+    private static int NormalizeMdnsResolveTimeoutMilliseconds(int rawMdnsResolveTimeoutMilliseconds)
+    {
+        if (rawMdnsResolveTimeoutMilliseconds is < 250 or > 15000)
+        {
+            throw new InvalidOperationException("mDNS resolve timeout must be between 250 and 15000 milliseconds.");
+        }
+
+        return rawMdnsResolveTimeoutMilliseconds;
     }
 }

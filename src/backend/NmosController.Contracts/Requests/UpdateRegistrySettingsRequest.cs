@@ -11,6 +11,17 @@ public sealed class UpdateRegistrySettingsRequest
     [Url]
     public string BaseUrl { get; set; } = string.Empty;
 
+    [Required]
+    [MaxLength(16)]
+    public string DiscoveryMode { get; set; } = "Manual";
+
+    [Required]
+    [MaxLength(128)]
+    public string MdnsQueryServiceType { get; set; } = "_nmos-query._tcp.local.";
+
+    [Range(250, 15000)]
+    public int MdnsResolveTimeoutMilliseconds { get; set; } = 2000;
+
     [Url]
     public string? ConnectionBaseUrl { get; set; }
 

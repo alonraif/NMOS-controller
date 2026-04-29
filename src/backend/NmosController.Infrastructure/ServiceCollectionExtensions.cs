@@ -29,6 +29,7 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IRegistrySettingsResolver, RegistrySettingsResolver>();
+        services.AddScoped<IMdnsRegistryDiscovery, MdnsRegistryDiscovery>();
         services.AddHostedService<DatabaseInitializationHostedService>();
 
         services.AddScoped<IRegistryRepository, RegistryRepository>();

@@ -12,6 +12,9 @@ internal sealed class RegistryConfigurationEntityConfiguration : IEntityTypeConf
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasMaxLength(256).IsRequired();
         builder.Property(x => x.BaseUrl).HasMaxLength(1024).IsRequired();
+        builder.Property(x => x.DiscoveryMode).HasMaxLength(16).IsRequired();
+        builder.Property(x => x.MdnsQueryServiceType).HasMaxLength(128).IsRequired();
+        builder.Property(x => x.MdnsResolveTimeoutMilliseconds).IsRequired();
         builder.Property(x => x.ConnectionBaseUrl).HasMaxLength(1024);
         builder.Property(x => x.ConnectionBaseUrls).HasMaxLength(4096);
         builder.Property(x => x.QueryApiVersion).HasMaxLength(32).IsRequired();
